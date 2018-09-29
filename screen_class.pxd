@@ -1,4 +1,5 @@
 from xcb cimport *
+from cpython.mem cimport PyMem_Free
 
 cdef list CONN_ERROR_LIST = [
 	"XCB_CONN_ERROR",
