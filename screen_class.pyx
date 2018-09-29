@@ -1,15 +1,17 @@
 import logging
-from xcb cimport *
 
-cdef class screen_class:
+
+cdef class Screen_Class:
 	cdef xcb_connection_t *c
 	cdef xcb_screen_t *default_screen
 	cdef int _screenNum
 	cdef xcb_intern_atom_reply_t *edid_atom
+	cdef xcb_generic_error_t *e
 
 	def __init__(self):
 		logging.basicConfig(level=logging.DEBUG)
 		self._open_connection()
+		self._fetch_default_screen()
 		self._fetch_edid_atom()
 
 	def _open_connection(self):
@@ -19,7 +21,7 @@ cdef class screen_class:
 			raise SystemExit("Error connecting to X11 server. %s" % CONN_ERROR_LIST[conn_error - 1])
 		logging.info("Connected to X11 server.")
 
-	def _fetch_edid_atom(self):
+	def _fetch_default_screen(self):
 		cdef const xcb_setup_t *setup
 
 		setup = xcb_get_setup(self.c)
@@ -31,7 +33,18 @@ cdef class screen_class:
 
 		self.default_screen = iter.data
 
+	def _fetch_edid_atom(self):
+		only_if_exists = 1
+		edid_name = "EDID"
+		name_len = len(edid_name)
+		atom_cookie = xcb_intern_atom(self.c, only_if_exists, name_len, edid_name)
+		self.edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
+		while self.e == XCB_ATOM_NONE:
+			atom_cookie = xcb_intern_atom(self.c, only_if_exists, name_len, edid_name)
+			self.edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
 
+	def update_screen(self):
+		
 
 
 

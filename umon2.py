@@ -1,3 +1,3 @@
-from screen_class import screen_class
+from screen_class import Screen_Class
 
-screen_o = screen_class()
+screen_o = Screen_Class()
