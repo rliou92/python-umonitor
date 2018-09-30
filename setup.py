@@ -4,14 +4,14 @@ from Cython.Build import cythonize
 
 extensions = [
 	Extension(
-		"screen_class",
-		["screen_class.pyx"],
+		"*",
+		["*.pyx"],
 		libraries = ["X11", "xcb-randr", "xcb"]
 	),
 ]
 
 setup(
-	name = "umonitor",
+	name = "umon2",
 	packages = find_packages(),
 	ext_modules = cythonize(extensions),
 

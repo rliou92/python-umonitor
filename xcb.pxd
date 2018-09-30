@@ -45,10 +45,21 @@ cdef extern from "<xcb/xcb.h>":
 
 
 cdef extern from "<xcb/randr.h>":
+	ctypedef uint32_t xcb_randr_crtc_t
+	ctypedef uint32_t xcb_timestamp_t
 	ctypedef struct xcb_randr_get_screen_resources_cookie_t:
 		pass
 
 	ctypedef struct xcb_randr_get_screen_resources_reply_t:
+		pass
+
+	ctypedef struct xcb_randr_get_output_primary_cookie_t:
+		pass
+
+	ctypedef struct xcb_randr_get_output_primary_reply_t:
+		pass
+
+	ctypedef struct xcb_randr_get_crtc_info_cookie_t:
 		pass
 
 	xcb_randr_get_screen_resources_reply_t * xcb_randr_get_screen_resources_reply (
@@ -56,10 +67,29 @@ cdef extern from "<xcb/randr.h>":
 			xcb_randr_get_screen_resources_cookie_t   cookie,
 			xcb_generic_error_t                     **e)
 
-	xcb_randr_get_screen_resources_cookie_t xcb_randr_get_screen_resources ( xcb_connection_t *c, xcb_window_t      window);
+	xcb_randr_get_screen_resources_cookie_t xcb_randr_get_screen_resources ( xcb_connection_t *c, xcb_window_t      window)
 
+
+	xcb_randr_get_output_primary_cookie_t xcb_randr_get_output_primary (xcb_connection_t *c,
+	                              xcb_window_t      window);
+
+	xcb_randr_get_output_primary_reply_t * xcb_randr_get_output_primary_reply (xcb_connection_t *c, xcb_randr_get_output_primary_cookie_t cookie, xcb_generic_error_t **e)
+
+	xcb_randr_get_crtc_info_cookie_t xcb_randr_get_crtc_info (                        xcb_connection_t *c,
+	                         xcb_randr_crtc_t  crtc,
+	                         xcb_timestamp_t   config_timestamp)
 
 
 cdef enum:
 	XCB_INTERN_ATOM = 16
 	XCB_ATOM_NONE = 0
+
+CONN_ERROR_LIST = (
+	"XCB_CONN_ERROR",
+	"XCB_CONN_CLOSED_EXT_NOTSUPPORTED",
+	"XCB_CONN_CLOSED_MEM_INSUFFICIENT",
+	"XCB_CONN_CLOSED_REQ_LEN_EXCEED",
+	"XCB_CONN_CLOSED_PARSE_ERR",
+	"XCB_CONN_CLOSED_INVALID_SCREEN",
+	"XCB_CONN_CLOSED_FDPASSING_FAILED"
+)
