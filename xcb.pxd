@@ -47,6 +47,8 @@ cdef extern from "<xcb/xcb.h>":
 cdef extern from "<xcb/randr.h>":
 	ctypedef uint32_t xcb_randr_crtc_t
 	ctypedef uint32_t xcb_timestamp_t
+	ctypedef uint32_t xcb_randr_output_t
+
 	ctypedef struct xcb_randr_get_screen_resources_cookie_t:
 		pass
 
@@ -62,22 +64,34 @@ cdef extern from "<xcb/randr.h>":
 	ctypedef struct xcb_randr_get_crtc_info_cookie_t:
 		pass
 
+	ctypedef struct xcb_randr_get_output_info_cookie_t:
+		pass
+
+	ctypedef struct xcb_randr_get_output_info_reply_t:
+		pass
+
+
 	xcb_randr_get_screen_resources_reply_t * xcb_randr_get_screen_resources_reply (
 			xcb_connection_t                         *c,
 			xcb_randr_get_screen_resources_cookie_t   cookie,
 			xcb_generic_error_t                     **e)
 
-	xcb_randr_get_screen_resources_cookie_t xcb_randr_get_screen_resources ( xcb_connection_t *c, xcb_window_t      window)
+	xcb_randr_get_screen_resources_cookie_t xcb_randr_get_screen_resources ( xcb_connection_t *c, xcb_window_t window)
 
 
-	xcb_randr_get_output_primary_cookie_t xcb_randr_get_output_primary (xcb_connection_t *c,
-	                              xcb_window_t      window);
+	xcb_randr_get_output_primary_cookie_t xcb_randr_get_output_primary (xcb_connection_t *c, xcb_window_t window);
 
 	xcb_randr_get_output_primary_reply_t * xcb_randr_get_output_primary_reply (xcb_connection_t *c, xcb_randr_get_output_primary_cookie_t cookie, xcb_generic_error_t **e)
 
-	xcb_randr_get_crtc_info_cookie_t xcb_randr_get_crtc_info (                        xcb_connection_t *c,
-	                         xcb_randr_crtc_t  crtc,
-	                         xcb_timestamp_t   config_timestamp)
+	xcb_randr_get_crtc_info_cookie_t xcb_randr_get_crtc_info ( xcb_connection_t *c, xcb_randr_crtc_t  crtc, xcb_timestamp_t config_timestamp)
+
+	xcb_randr_output_t * xcb_randr_get_screen_resources_outputs (const xcb_randr_get_screen_resources_reply_t *R)
+
+	int xcb_randr_get_screen_resources_outputs_length (const xcb_randr_get_screen_resources_reply_t *R)
+
+	xcb_randr_get_output_info_cookie_t xcb_randr_get_output_info (xcb_connection_t *c, xcb_randr_output_t output, xcb_timestamp_t config_timestamp)
+
+	xcb_randr_get_output_info_reply_t * xcb_randr_get_output_info_reply (xcb_connection_t *c, xcb_randr_get_output_info_cookie_t cookie, xcb_generic_error_t **e)
 
 
 cdef enum:
