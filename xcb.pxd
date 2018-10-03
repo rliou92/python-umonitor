@@ -59,6 +59,7 @@ cdef extern from "<xcb/randr.h>":
 		pass
 
 	ctypedef struct xcb_randr_get_output_primary_reply_t:
+		xcb_randr_output_t output
 		pass
 
 	ctypedef struct xcb_randr_get_crtc_info_cookie_t:
@@ -97,6 +98,7 @@ cdef extern from "<xcb/randr.h>":
 cdef enum:
 	XCB_INTERN_ATOM = 16
 	XCB_ATOM_NONE = 0
+	XCB_CURRENT_TIME = 0L
 
 CONN_ERROR_LIST = (
 	"XCB_CONN_ERROR",

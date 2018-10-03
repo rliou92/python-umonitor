@@ -8,3 +8,6 @@ cdef class Screen_Class:
 	cdef xcb_intern_atom_reply_t *edid_atom
 	cdef xcb_generic_error_t *e
 	cdef xcb_randr_get_screen_resources_reply_t *screen_resources_reply
+	cdef xcb_randr_output_t primary_output
+
+	cdef list output_info_reply_list

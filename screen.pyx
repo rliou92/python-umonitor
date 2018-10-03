@@ -39,7 +39,30 @@ cdef class Screen_Class:
 			atom_cookie = xcb_intern_atom(self.c, only_if_exists, name_len, edid_name)
 			self.edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
 
+	def _fetch_output_info(self):
+		cdef xcb_randr_get_output_info_cookie_t output_info_cookie
+		cdef xcb_randr_get_output_info_reply_t *output_info_reply
+
+		cdef xcb_randr_output_t *output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
+
+		outputs_length = xcb_randr_get_screen_resources_outputs_length(self.screen_resources_reply)
+
+		self.output_info_reply_list = []
+		for i in range(outputs_length):
+			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
+			output_info_reply = xcb_randr_get_output_info_reply(self.c, output_info_cookie, &self.e)
+			self.output_info_reply_list.append(output_info_reply)
+
+	def _get_primary_output(self):
+		cdef xcb_randr_get_output_primary_cookie_t output_primary_cookie = xcb_randr_get_output_primary(self.c, self.default_screen.root)
+		cdef xcb_randr_get_output_primary_reply_t *output_primary_reply = xcb_randr_get_output_primary_reply(self.c, output_primary_cookie, &self.e)
+		self.primary_output = output_primary_reply.output
+
+
+
 	def update_screen(self):
 		PyMem_Free(self.screen_resources_reply)
 		screen_resources_cookie = xcb_randr_get_screen_resources(self.c, self.default_screen.root)
 		self.screen_resources_reply = xcb_randr_get_screen_resources_reply(self.c, screen_resources_cookie, &self.e)
+		self._get_primary_output()
+		self._fetch_output_info()
