@@ -103,11 +103,16 @@ cdef class Screen_Class:
 			PyMem_Free(output_property_reply)
 			return NULL
 
-		cdef char sc = chr(ord('A') - 1)
+		logging.debug("Type error here?")
+		cdef uint8_t sc = ord('A') - 1
+		logging.debug("3 Type error here?")
 		vendor[0] = sc + (edid[8] >> 2)
+		logging.debug("4 Type error here?")
 		vendor[1] = sc + (((edid[8] & 0x03) << 3) | (edid[9] >> 5))
 		vendor[2] = sc + (edid[9] & 0x1F)
 		vendor[3] = '\0'
+
+		logging.debug("2 Type error here?")
 
 		# product = (edid[11] << 8) | edid[10];
 		# serial = edid[15] << 24 | edid[14] << 16 | edid[13] << 8 | edid[12];
