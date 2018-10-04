@@ -104,12 +104,12 @@ cdef class Screen_Class:
 			return NULL
 
 		logging.debug("Type error here?")
-		cdef uint8_t sc = ord('A') - 1
+		cdef char sc = <char> (ord('A') - 1)
 		logging.debug("3 Type error here?")
-		vendor[0] = sc + (edid[8] >> 2)
+		vendor[0] = <char> (sc + (edid[8] >> 2))
 		logging.debug("4 Type error here?")
-		vendor[1] = sc + (((edid[8] & 0x03) << 3) | (edid[9] >> 5))
-		vendor[2] = sc + (edid[9] & 0x1F)
+		vendor[1] = <char> (sc + (((edid[8] & 0x03) << 3) | (edid[9] >> 5)))
+		vendor[2] = <char> (sc + (edid[9] & 0x1F))
 		vendor[3] = '\0'
 
 		logging.debug("2 Type error here?")
@@ -126,9 +126,9 @@ cdef class Screen_Class:
 			model_name_found = 1
 			for j in range(0, 13):
 				if edid[i + 5 + j] == 0x0a:
-					modelname[j] = 0x00
+					modelname[j] = <char> 0x00
 				else:
-					modelname[j] = edid[i + 5 + j]
+					modelname[j] = <char> edid[i + 5 + j]
 
 		if not model_name_found:
 			strcpy(modelname, "unknown")
