@@ -1,5 +1,4 @@
 from xcb cimport *
-from cpython.mem cimport PyMem_Free
 
 cdef class Screen_Class:
 	cdef xcb_connection_t *c
@@ -8,6 +7,7 @@ cdef class Screen_Class:
 	cdef xcb_intern_atom_reply_t *edid_atom
 	cdef xcb_generic_error_t *e
 	cdef xcb_randr_get_screen_resources_reply_t *screen_resources_reply
-	cdef xcb_randr_output_t primary_output
-
-	cdef list output_info_reply_list
+	# cdef xcb_randr_get_output_info_reply_t **output_info_reply_list
+	# cdef xcb_randr_get_output_info_reply_t *output_info_reply
+	cdef char * _get_output_name(Screen_Class, xcb_randr_get_output_info_reply_t *output_info_reply)
+	cdef char * _get_edid_name(Screen_Class, xcb_randr_output_t * output_p)

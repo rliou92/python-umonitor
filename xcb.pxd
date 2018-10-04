@@ -71,16 +71,22 @@ cdef extern from "<xcb/randr.h>":
 	ctypedef struct xcb_randr_get_output_info_reply_t:
 		pass
 
+	ctypedef struct xcb_randr_get_output_property_cookie_t:
+		pass
+
+	ctypedef struct xcb_randr_get_output_property_reply_t:
+		pass
+
 
 	xcb_randr_get_screen_resources_reply_t * xcb_randr_get_screen_resources_reply (
-			xcb_connection_t                         *c,
-			xcb_randr_get_screen_resources_cookie_t   cookie,
-			xcb_generic_error_t                     **e)
+		xcb_connection_t                         *c,
+		xcb_randr_get_screen_resources_cookie_t   cookie,
+		xcb_generic_error_t                     **e)
 
 	xcb_randr_get_screen_resources_cookie_t xcb_randr_get_screen_resources ( xcb_connection_t *c, xcb_window_t window)
 
 
-	xcb_randr_get_output_primary_cookie_t xcb_randr_get_output_primary (xcb_connection_t *c, xcb_window_t window);
+	xcb_randr_get_output_primary_cookie_t xcb_randr_get_output_primary (xcb_connection_t *c, xcb_window_t window)
 
 	xcb_randr_get_output_primary_reply_t * xcb_randr_get_output_primary_reply (xcb_connection_t *c, xcb_randr_get_output_primary_cookie_t cookie, xcb_generic_error_t **e)
 
@@ -94,11 +100,37 @@ cdef extern from "<xcb/randr.h>":
 
 	xcb_randr_get_output_info_reply_t * xcb_randr_get_output_info_reply (xcb_connection_t *c, xcb_randr_get_output_info_cookie_t cookie, xcb_generic_error_t **e)
 
+	uint8_t * xcb_randr_get_output_info_name (const xcb_randr_get_output_info_reply_t *R)
+
+	int xcb_randr_get_output_info_name_length (const xcb_randr_get_output_info_reply_t *R)
+
+	xcb_randr_get_output_property_cookie_t xcb_randr_get_output_property (
+		xcb_connection_t   *c,
+		xcb_randr_output_t  output,
+		xcb_atom_t          property,
+		xcb_atom_t          type,
+		uint32_t            long_offset,
+		uint32_t            long_length,
+		uint8_t             _delete,
+		uint8_t             pending)
+
+	xcb_randr_get_output_property_reply_t *xcb_randr_get_output_property_reply (
+		xcb_connection_t                        *c,
+		xcb_randr_get_output_property_cookie_t   cookie,
+		xcb_generic_error_t                    **e)
+
+	int xcb_randr_get_output_property_data_length (
+		const xcb_randr_get_output_property_reply_t *R)
+
+	uint8_t *xcb_randr_get_output_property_data (
+		const xcb_randr_get_output_property_reply_t *R)
+
 
 cdef enum:
 	XCB_INTERN_ATOM = 16
 	XCB_ATOM_NONE = 0
 	XCB_CURRENT_TIME = 0L
+	AnyPropertyType = 0L
 
 CONN_ERROR_LIST = (
 	"XCB_CONN_ERROR",
