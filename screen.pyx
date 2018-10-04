@@ -54,12 +54,13 @@ cdef class Screen_Class:
 		outputs_length = xcb_randr_get_screen_resources_outputs_length(self.screen_resources_reply)
 
 		# self.output_info_reply_list = <xcb_randr_get_output_info_reply_t **> PyMem_Malloc(outputs_length * sizeof(xcb_randr_get_output_info_reply_t *))
+		cdef int i
 		for i in range(outputs_length):
 			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
 			output_info_reply = xcb_randr_get_output_info_reply(self.c, output_info_cookie, &self.e)
 			# self.output_info_reply_list[i] = output_info_reply
 			output_name = self._get_output_name(output_info_reply)
-			edid_name = self._get_edid_name(output_p[i])
+			edid_name = self._get_edid_name(output_p + i)
 
 	cdef char * _get_output_name(self, xcb_randr_get_output_info_reply_t *output_info_reply):
 		cdef uint8_t *output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
@@ -100,7 +101,7 @@ cdef class Screen_Class:
 			strcpy(modelname, "unknown")
 			snprintf(edid_string, 17, "%s %s", vendor, modelname)
 			PyMem_Free(output_property_reply)
-			return
+			return NULL
 
 		cdef char sc = chr(ord('A') - 1)
 		vendor[0] = sc + (edid[8] >> 2)
