@@ -48,6 +48,7 @@ cdef class Screen_Class:
 	def _get_output_info(self):
 		cdef xcb_randr_get_output_info_cookie_t output_info_cookie
 		cdef xcb_randr_get_output_info_reply_t *output_info_reply
+		cdef xcb_randr_output_t primary_output
 
 		cdef xcb_randr_output_t *output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
 
@@ -58,19 +59,20 @@ cdef class Screen_Class:
 		for i in range(outputs_length):
 			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
 			output_info_reply = xcb_randr_get_output_info_reply(self.c, output_info_cookie, &self.e)
-			# self.output_info_reply_list[i] = output_info_reply
+			primary_output = self._get_primary_output()
 			output_name = self._get_output_name(output_info_reply)
 			edid_name = self._get_edid_name(output_p + i)
 
 	cdef char * _get_output_name(self, xcb_randr_get_output_info_reply_t *output_info_reply):
 		cdef uint8_t *output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
-		output_name_length = xcb_randr_get_output_info_name_length(output_info_reply);
-		output_name = <char *> PyMem_Malloc((output_name_length + 1) * sizeof(char));
+		output_name_length = xcb_randr_get_output_info_name_length(output_info_reply)
+		output_name = <char *> PyMem_Malloc((output_name_length + 1) * sizeof(char))
 
 		for i in range(output_name_length):
 			output_name[i] = <char> output_name_raw[i]
 
-		output_name[i] = '\0'
+		output_name[output_name_length] = '\0'
+		logging.info("Output name %s" % output_name)
 		return output_name
 
 	cdef char * _get_edid_name(self, xcb_randr_output_t * output_p):
@@ -101,18 +103,14 @@ cdef class Screen_Class:
 			strcpy(modelname, "unknown")
 			snprintf(edid_string, 17, "%s %s", vendor, modelname)
 			PyMem_Free(output_property_reply)
+			logging.info("Finished edid_to_string on output %s" % edid_string)
 			return NULL
 
-		logging.debug("Type error here?")
 		cdef char sc = <char> (ord('A') - 1)
-		logging.debug("3 Type error here?")
 		vendor[0] = <char> (sc + (edid[8] >> 2))
-		logging.debug("4 Type error here?")
 		vendor[1] = <char> (sc + (((edid[8] & 0x03) << 3) | (edid[9] >> 5)))
 		vendor[2] = <char> (sc + (edid[9] & 0x1F))
 		vendor[3] = '\0'
-
-		logging.debug("2 Type error here?")
 
 		# product = (edid[11] << 8) | edid[10];
 		# serial = edid[15] << 24 | edid[14] << 16 | edid[13] << 8 | edid[12];
@@ -144,10 +142,12 @@ cdef class Screen_Class:
 
 
 
-	def _get_primary_output(self):
+	cdef xcb_randr_output_t _get_primary_output(self):
 		cdef xcb_randr_get_output_primary_cookie_t output_primary_cookie = xcb_randr_get_output_primary(self.c, self.default_screen.root)
 		cdef xcb_randr_get_output_primary_reply_t *output_primary_reply = xcb_randr_get_output_primary_reply(self.c, output_primary_cookie, &self.e)
-		return output_primary_reply.output
+		cdef xcb_randr_output_t primary_output = output_primary_reply.output
+		PyMem_Free(output_primary_reply)
+		return primary_output
 
 
 

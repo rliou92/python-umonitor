@@ -11,3 +11,4 @@ cdef class Screen_Class:
 	# cdef xcb_randr_get_output_info_reply_t *output_info_reply
 	cdef char * _get_output_name(Screen_Class, xcb_randr_get_output_info_reply_t *output_info_reply)
 	cdef char * _get_edid_name(Screen_Class, xcb_randr_output_t * output_p)
+	cdef xcb_randr_output_t _get_primary_output(Screen_Class)
