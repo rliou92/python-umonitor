@@ -53,14 +53,15 @@ cdef extern from "<xcb/randr.h>":
 		pass
 
 	ctypedef struct xcb_randr_get_screen_resources_reply_t:
-		pass
+		xcb_timestamp_t config_timestamp
+
 
 	ctypedef struct xcb_randr_get_output_primary_cookie_t:
 		pass
 
 	ctypedef struct xcb_randr_get_output_primary_reply_t:
 		xcb_randr_output_t output
-		pass
+
 
 	ctypedef struct xcb_randr_get_crtc_info_cookie_t:
 		pass
@@ -69,7 +70,11 @@ cdef extern from "<xcb/randr.h>":
 		pass
 
 	ctypedef struct xcb_randr_get_output_info_reply_t:
-		pass
+		xcb_randr_crtc_t crtc
+		uint16_t num_crtcs
+		uint16_t num_modes
+		uint8_t connection
+
 
 	ctypedef struct xcb_randr_get_output_property_cookie_t:
 		pass
@@ -77,6 +82,15 @@ cdef extern from "<xcb/randr.h>":
 	ctypedef struct xcb_randr_get_output_property_reply_t:
 		pass
 
+	ctypedef struct xcb_randr_get_crtc_info_cookie_t:
+		pass
+
+	ctypedef struct xcb_randr_get_crtc_info_reply_t:
+		int16_t x
+		int16_t y
+		uint16_t num_outputs
+		uint16_t num_possible_outputs
+		uint16_t rotation
 
 	xcb_randr_get_screen_resources_reply_t * xcb_randr_get_screen_resources_reply (
 		xcb_connection_t                         *c,
@@ -124,6 +138,16 @@ cdef extern from "<xcb/randr.h>":
 
 	uint8_t *xcb_randr_get_output_property_data (
 		const xcb_randr_get_output_property_reply_t *R)
+
+	xcb_randr_get_crtc_info_cookie_t xcb_randr_get_crtc_info (
+		xcb_connection_t *c,
+		xcb_randr_crtc_t  crtc,
+		xcb_timestamp_t   config_timestamp)
+
+	xcb_randr_get_crtc_info_reply_t * xcb_randr_get_crtc_info_reply (
+		xcb_connection_t *c,
+		xcb_randr_get_crtc_info_cookie_t cookie,
+		xcb_generic_error_t **e)
 
 
 cdef enum:

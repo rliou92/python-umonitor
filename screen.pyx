@@ -14,7 +14,7 @@ cdef class Screen_Class:
 		self._open_connection()
 		self._get_default_screen()
 		self._get_edid_atom()
-		self.update_screen()
+		# self.update_screen()
 
 	def _open_connection(self):
 		self.c = xcb_connect(NULL, &self._screenNum)
@@ -49,19 +49,49 @@ cdef class Screen_Class:
 		cdef xcb_randr_get_output_info_cookie_t output_info_cookie
 		cdef xcb_randr_get_output_info_reply_t *output_info_reply
 		cdef xcb_randr_output_t primary_output
+		cdef xcb_randr_get_crtc_info_cookie_t crtc_info_cookie
+		cdef xcb_randr_get_crtc_info_reply_t *crtc_info_reply
 
 		cdef xcb_randr_output_t *output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
 
 		outputs_length = xcb_randr_get_screen_resources_outputs_length(self.screen_resources_reply)
 
-		# self.output_info_reply_list = <xcb_randr_get_output_info_reply_t **> PyMem_Malloc(outputs_length * sizeof(xcb_randr_get_output_info_reply_t *))
+		primary_output = self._get_primary_output()
+
+		screen_info = {}
 		cdef int i
 		for i in range(outputs_length):
 			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
 			output_info_reply = xcb_randr_get_output_info_reply(self.c, output_info_cookie, &self.e)
-			primary_output = self._get_primary_output()
+
+			if output_info_reply.connection:
+				PyMem_Free(output_info_reply)
+				continue
+
+			# Output is connected
 			output_name = self._get_output_name(output_info_reply)
+			screen_info[output_name] = {}
 			edid_name = self._get_edid_name(output_p + i)
+			screen_info[output_name]["edid"] = edid_name
+
+			if output_info_reply.crtc:
+				# This output is enabled
+				if output_p[i] == primary_output:
+					# This output is the primary output
+					screen_info[output_name]["primary"] = True
+
+				crtc_info_cookie = xcb_randr_get_crtc_info(self.c, output_info_reply.crtc, self.screen_resources_reply.config_timestamp)
+				crtc_info_reply = xcb_randr_get_crtc_info_reply(self.c, crtc_info_cookie, &self.e)
+
+				screen_info[output_name]["x"] = crtc_info_reply.x
+				screen_info[output_name]["y"] = crtc_info_reply.y
+				screen_info[output_name]["rotate_setting"] = crtc_info_reply.rotation
+
+		return screen_info
+
+
+
+
 
 	cdef char * _get_output_name(self, xcb_randr_get_output_info_reply_t *output_info_reply):
 		cdef uint8_t *output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
@@ -155,4 +185,4 @@ cdef class Screen_Class:
 		PyMem_Free(self.screen_resources_reply)
 		screen_resources_cookie = xcb_randr_get_screen_resources(self.c, self.default_screen.root)
 		self.screen_resources_reply = xcb_randr_get_screen_resources_reply(self.c, screen_resources_cookie, &self.e)
-		self._get_output_info()
+		return self._get_output_info()
