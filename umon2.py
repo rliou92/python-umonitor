@@ -1,4 +1,4 @@
-from screen import Screen
+# from screen import Screen
 from conf_manager import ConfManager
 import logging
 
@@ -10,9 +10,10 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 config_file = "umon2.conf"
 
-conf_manager = ConfManager()
-conf_manager.save_profile("home", config_file)
-# conf_manager.delete_profile("home", config_file)
+conf_manager = ConfManager(config_file)
+# conf_manager.save_profile("home")
+# conf_manager.delete_profile("home")
+conf_manager.view_profile("home")
 
 # load = Load()
 # load.load_profile(setup_info)
