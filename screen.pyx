@@ -13,7 +13,11 @@ cdef class Screen:
 		self._open_connection()
 		self._get_default_screen()
 		self._get_edid_atom()
-		# self.update_screen()
+
+	def __dealloc__(self):
+		xcb_disconnect(self.c)
+		PyMem_Free(self.edid_atom)
+		PyMem_Free(self.screen_resources_reply)
 
 	def _open_connection(self):
 		self.c = xcb_connect(NULL, &self._screenNum)
@@ -89,6 +93,12 @@ cdef class Screen:
 				mode_info = self._get_mode_info(output_info_reply, crtc_info_reply.mode)
 				output_info[output_name]["width"] = mode_info["width"]
 				output_info[output_name]["height"] = mode_info["height"]
+
+				PyMem_Free(crtc_info_reply)
+
+			PyMem_Free(output_info_reply)
+			PyMem_Free(output_name)
+			PyMem_Free(edid_name)
 
 		return output_info
 

@@ -31,6 +31,7 @@ cdef extern from "<xcb/xcb.h>":
 	ctypedef struct xcb_intern_atom_cookie_t:
 		pass
 
+	void xcb_disconnect(xcb_connection_t *c)
 	xcb_setup_t *xcb_get_setup(xcb_connection_t *c)
 	xcb_connection_t *xcb_connect(const char *displayname, int *screenp)
 	int xcb_connection_has_error(xcb_connection_t *c)
