@@ -2,8 +2,16 @@ from cpython.mem cimport PyMem_Free, PyMem_Malloc
 import logging
 from libc.stdio cimport snprintf
 from libc.string cimport strcpy
+from xcb cimport *
 
 cdef class Screen:
+
+	cdef xcb_connection_t *c
+	cdef xcb_screen_t *default_screen
+	cdef int _screenNum
+	cdef xcb_intern_atom_reply_t *edid_atom
+	cdef xcb_generic_error_t *e
+	cdef xcb_randr_get_screen_resources_reply_t *screen_resources_reply
 
 	def __cinit__(self):
 		self.screen_resources_reply = NULL
@@ -72,10 +80,11 @@ cdef class Screen:
 				continue
 
 			# Output is connected
-			output_name = self._get_output_name(output_info_reply)
+			output_name_bytes = self._get_output_name(output_info_reply)
+			output_name = output_name_bytes.decode("UTF-8")
 			output_info[output_name] = {}
 			edid_name = self._get_edid_name(output_p + i)
-			output_info[output_name]["edid"] = edid_name
+			output_info[output_name]["edid"] = edid_name.decode("UTF-8")
 
 			if output_info_reply.crtc:
 				# This output is enabled
@@ -97,7 +106,7 @@ cdef class Screen:
 				PyMem_Free(crtc_info_reply)
 
 			PyMem_Free(output_info_reply)
-			PyMem_Free(output_name)
+			PyMem_Free(output_name_bytes)
 			PyMem_Free(edid_name)
 
 		return output_info
@@ -214,11 +223,10 @@ cdef class Screen:
 			"width": self.default_screen.width_in_pixels,
 			"height": self.default_screen.height_in_pixels,
 			"widthMM": self.default_screen.width_in_millimeters,
-			"heightMM": self.default_screen.height_in_pixels
+			"heightMM": self.default_screen.height_in_millimeters
 		}
 
-
-	def update_screen(self):
+	def get_setup_info(self):
 		PyMem_Free(self.screen_resources_reply)
 		screen_resources_cookie = xcb_randr_get_screen_resources(self.c, self.default_screen.root)
 		self.screen_resources_reply = xcb_randr_get_screen_resources_reply(self.c, screen_resources_cookie, &self.e)

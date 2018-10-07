@@ -1,3 +1,4 @@
 build/*
 *.c
 *.cpython*
+umon2.conf
