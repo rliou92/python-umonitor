@@ -9,19 +9,21 @@ cdef extern from "<xcb/xcb.h>":
 	ctypedef uint32_t xcb_window_t
 	ctypedef struct xcb_screen_t:
 		xcb_window_t root
-		pass
+		uint16_t       width_in_pixels
+		uint16_t       height_in_pixels
+		uint16_t       width_in_millimeters
+		uint16_t       height_in_millimeters
+
 
 	ctypedef uint32_t xcb_atom_t
 	ctypedef struct xcb_intern_atom_reply_t:
-		xcb_atom_t atom;
-		pass
+		xcb_atom_t atom
 
 	cdef struct xcb_setup_t:
 		pass
 
 	ctypedef struct xcb_screen_iterator_t:
-		xcb_screen_t *data;
-		pass
+		xcb_screen_t *data
 
 	ctypedef struct xcb_generic_error_t:
 		pass
@@ -48,6 +50,7 @@ cdef extern from "<xcb/randr.h>":
 	ctypedef uint32_t xcb_randr_crtc_t
 	ctypedef uint32_t xcb_timestamp_t
 	ctypedef uint32_t xcb_randr_output_t
+	ctypedef uint32_t xcb_randr_mode_t
 
 	ctypedef struct xcb_randr_get_screen_resources_cookie_t:
 		pass
@@ -75,7 +78,6 @@ cdef extern from "<xcb/randr.h>":
 		uint16_t num_modes
 		uint8_t connection
 
-
 	ctypedef struct xcb_randr_get_output_property_cookie_t:
 		pass
 
@@ -91,6 +93,15 @@ cdef extern from "<xcb/randr.h>":
 		uint16_t num_outputs
 		uint16_t num_possible_outputs
 		uint16_t rotation
+		xcb_randr_mode_t mode
+
+	ctypedef struct xcb_randr_mode_info_iterator_t:
+		xcb_randr_mode_info_t *data
+
+	ctypedef struct xcb_randr_mode_info_t:
+		uint32_t id
+		uint16_t width
+		uint16_t height
 
 	xcb_randr_get_screen_resources_reply_t * xcb_randr_get_screen_resources_reply (
 		xcb_connection_t                         *c,
@@ -148,6 +159,13 @@ cdef extern from "<xcb/randr.h>":
 		xcb_connection_t *c,
 		xcb_randr_get_crtc_info_cookie_t cookie,
 		xcb_generic_error_t **e)
+
+	int xcb_randr_get_output_info_modes_length (const xcb_randr_get_output_info_reply_t *R)
+	xcb_randr_mode_t * xcb_randr_get_output_info_modes (const xcb_randr_get_output_info_reply_t *R)
+	xcb_randr_mode_info_iterator_t xcb_randr_get_screen_resources_modes_iterator (const xcb_randr_get_screen_resources_reply_t *R)
+	int xcb_randr_get_screen_resources_modes_length (const xcb_randr_get_screen_resources_reply_t *R)
+	void xcb_randr_mode_info_next (xcb_randr_mode_info_iterator_t *i)
+
 
 
 cdef enum:

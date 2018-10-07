@@ -3,14 +3,13 @@ import logging
 from libc.stdio cimport snprintf
 from libc.string cimport strcpy
 
-cdef class Screen_Class:
+cdef class Screen:
 
 	def __cinit__(self):
 		self.screen_resources_reply = NULL
 		# self.output_info_reply_list = NULL
 
 	def __init__(self):
-		logging.basicConfig(level=logging.DEBUG)
 		self._open_connection()
 		self._get_default_screen()
 		self._get_edid_atom()
@@ -58,7 +57,7 @@ cdef class Screen_Class:
 
 		primary_output = self._get_primary_output()
 
-		screen_info = {}
+		output_info = {}
 		cdef int i
 		for i in range(outputs_length):
 			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
@@ -70,27 +69,50 @@ cdef class Screen_Class:
 
 			# Output is connected
 			output_name = self._get_output_name(output_info_reply)
-			screen_info[output_name] = {}
+			output_info[output_name] = {}
 			edid_name = self._get_edid_name(output_p + i)
-			screen_info[output_name]["edid"] = edid_name
+			output_info[output_name]["edid"] = edid_name
 
 			if output_info_reply.crtc:
 				# This output is enabled
 				if output_p[i] == primary_output:
 					# This output is the primary output
-					screen_info[output_name]["primary"] = True
+					output_info[output_name]["primary"] = True
 
 				crtc_info_cookie = xcb_randr_get_crtc_info(self.c, output_info_reply.crtc, self.screen_resources_reply.config_timestamp)
 				crtc_info_reply = xcb_randr_get_crtc_info_reply(self.c, crtc_info_cookie, &self.e)
 
-				screen_info[output_name]["x"] = crtc_info_reply.x
-				screen_info[output_name]["y"] = crtc_info_reply.y
-				screen_info[output_name]["rotate_setting"] = crtc_info_reply.rotation
+				output_info[output_name]["x"] = crtc_info_reply.x
+				output_info[output_name]["y"] = crtc_info_reply.y
+				output_info[output_name]["rotate_setting"] = crtc_info_reply.rotation
 
-		return screen_info
+				mode_info = self._get_mode_info(output_info_reply, crtc_info_reply.mode)
+				output_info[output_name]["width"] = mode_info["width"]
+				output_info[output_name]["height"] = mode_info["height"]
+
+		return output_info
 
 
+	cdef _get_mode_info(self, xcb_randr_get_output_info_reply_t *output_info_reply, xcb_randr_mode_t mode):
+		cdef xcb_randr_mode_t *mode_id_p
+		cdef xcb_randr_mode_info_iterator_t mode_info_iterator
 
+		num_output_modes = xcb_randr_get_output_info_modes_length(output_info_reply)
+		mode_id_p = xcb_randr_get_output_info_modes(output_info_reply)
+
+		mode_info = {}
+		for i in range(num_output_modes):
+			if mode_id_p[i] != mode:
+				continue
+			mode_info_iterator = xcb_randr_get_screen_resources_modes_iterator(self.screen_resources_reply)
+			num_screen_modes = xcb_randr_get_screen_resources_modes_length(self.screen_resources_reply)
+			for j in range(num_screen_modes):
+				if mode_info_iterator.data.id == mode_id_p[i]:
+					mode_info["width"] = mode_info_iterator.data.width
+					mode_info["height"] = mode_info_iterator.data.height
+				xcb_randr_mode_info_next(&mode_info_iterator)
+
+		return mode_info
 
 
 	cdef char * _get_output_name(self, xcb_randr_get_output_info_reply_t *output_info_reply):
@@ -170,8 +192,6 @@ cdef class Screen_Class:
 		logging.info("Finished edid_to_string on output %s" % edid_string)
 		return edid_string
 
-
-
 	cdef xcb_randr_output_t _get_primary_output(self):
 		cdef xcb_randr_get_output_primary_cookie_t output_primary_cookie = xcb_randr_get_output_primary(self.c, self.default_screen.root)
 		cdef xcb_randr_get_output_primary_reply_t *output_primary_reply = xcb_randr_get_output_primary_reply(self.c, output_primary_cookie, &self.e)
@@ -179,10 +199,19 @@ cdef class Screen_Class:
 		PyMem_Free(output_primary_reply)
 		return primary_output
 
+	def _get_screen_info(self):
+		return {
+			"width": self.default_screen.width_in_pixels,
+			"height": self.default_screen.height_in_pixels,
+			"widthMM": self.default_screen.width_in_millimeters,
+			"heightMM": self.default_screen.height_in_pixels
+		}
 
 
 	def update_screen(self):
 		PyMem_Free(self.screen_resources_reply)
 		screen_resources_cookie = xcb_randr_get_screen_resources(self.c, self.default_screen.root)
 		self.screen_resources_reply = xcb_randr_get_screen_resources_reply(self.c, screen_resources_cookie, &self.e)
-		return self._get_output_info()
+		screen_info = self._get_screen_info()
+		output_info = self._get_output_info()
+		return {"Screen":{**screen_info}, "Monitors":{**output_info}}
