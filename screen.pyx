@@ -23,7 +23,7 @@ cdef class Screen:
 		self.c = xcb_connect(NULL, &self._screenNum)
 		conn_error = xcb_connection_has_error(self.c)
 		if conn_error != 0:
-			raise SystemExit("Error connecting to X11 server. %s" % CONN_ERROR_LIST[conn_error - 1])
+			raise Exception("Error connecting to X11 server. %s" % CONN_ERROR_LIST[conn_error - 1])
 		logging.info("Connected to X11 server.")
 
 	def _get_default_screen(self):

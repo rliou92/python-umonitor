@@ -2,6 +2,7 @@ from xcb cimport *
 from screen cimport Screen
 import json
 import logging
+import os
 
 cdef class ConfManager(Screen):
 
@@ -14,10 +15,13 @@ cdef class ConfManager(Screen):
 		try:
 			with open(config_file, "r") as config_fh:
 				profile_data = json.load(config_fh)
-		else:
+		except json.JSONDecodeError:
+			raise Exception("Configuration file is not valid JSON.")
+		except FileNotFoundError:
 			profile_data = {}
 
 		with open(config_file, "w") as config_fh:
+			# TODO check for overwriting
 			logging.debug(profile_data)
 			profile_data[profile_name] = setup_info
 			json.dump(profile_data, config_fh, indent=4)
@@ -29,16 +33,17 @@ cdef class ConfManager(Screen):
 		try:
 			with open(config_file, "r") as config_fh:
 				profile_data = json.load(config_fh)
-		else:
-			profile_data = {}
+		except json.JSONDecodeError:
+			raise Exception("Configuration file is not valid JSON.")
+		except FileNotFoundError:
+			raise Exception("Configuration file does not exist.")
 
 		logging.debug(profile_data)
 
 		try:
 			del profile_data[profile_name]
 		except KeyError:
-			print("Profile %s does not exist in configuration file." % profile_name)
-			return
+			raise Exception("Profile %s does not exist in configuration file." % profile_name)
 
 		with open(config_file, "w") as config_fh:
 			logging.debug(profile_data)
