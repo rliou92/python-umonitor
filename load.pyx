@@ -1,8 +1,13 @@
-import configparser
+from xcb import *
+from screen cimport Screen
 
-class Save_Class:
+class Load:
 
-	def __init__(self, screen_info):
-		config = configparser.ConfigParser()
-		with open("umon2.conf", "w") as configfile:
-			config.write(screen_info)
+	def __init__(self):
+		pass
+
+	def load_profile(self, profile_name):
+		# Find candidate crtcs
+		screen = Screen()
+		setup_info = screen.get_setup_info()
+		

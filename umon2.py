@@ -1,20 +1,18 @@
 from screen import Screen
+from conf_manager import ConfManager
 import logging
-import json
-# from save import Save
 
 # setup = current state of monitors, their resolutions, positions, etc
 # profile = loaded from configuration file
 
 # PYTHONMALLOC=malloc valgrind --leak-check=full --show-leak-kinds=definite python umon2.py
 
-logging.basicConfig(level=logging.WARNING)
-screen = Screen()
-setup_info = screen.get_setup_info()
-# print(setup_info)
+logging.basicConfig(level=logging.DEBUG)
+config_file = "umon2.conf"
 
-# conf = {"home": setup_info}
-# print(json.dumps(conf))
-# 
-# with open("umon2.conf", "w") as config_file:
-# 	json.dump(conf, config_file, indent=4)
+conf_manager = ConfManager()
+# conf_manager.save_profile("home", config_file)
+conf_manager.delete_profile("home", config_file)
+
+# load = Load()
+# load.load_profile(setup_info)

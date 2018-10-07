@@ -2,16 +2,8 @@ from cpython.mem cimport PyMem_Free, PyMem_Malloc
 import logging
 from libc.stdio cimport snprintf
 from libc.string cimport strcpy
-from xcb cimport *
 
 cdef class Screen:
-
-	cdef xcb_connection_t *c
-	cdef xcb_screen_t *default_screen
-	cdef int _screenNum
-	cdef xcb_intern_atom_reply_t *edid_atom
-	cdef xcb_generic_error_t *e
-	cdef xcb_randr_get_screen_resources_reply_t *screen_resources_reply
 
 	def __cinit__(self):
 		self.screen_resources_reply = NULL
