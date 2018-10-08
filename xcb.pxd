@@ -166,6 +166,8 @@ cdef extern from "<xcb/randr.h>":
 	xcb_randr_mode_info_iterator_t xcb_randr_get_screen_resources_modes_iterator (const xcb_randr_get_screen_resources_reply_t *R)
 	int xcb_randr_get_screen_resources_modes_length (const xcb_randr_get_screen_resources_reply_t *R)
 	void xcb_randr_mode_info_next (xcb_randr_mode_info_iterator_t *i)
+	xcb_randr_crtc_t *xcb_randr_get_output_info_crtcs (const xcb_randr_get_output_info_reply_t *R)
+
 
 
 

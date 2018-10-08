@@ -13,7 +13,8 @@ config_file = "umon2.conf"
 conf_manager = ConfManager(config_file)
 # conf_manager.save_profile("home")
 # conf_manager.delete_profile("home")
-conf_manager.view_profile("home")
+# conf_manager.view_profiles()
+conf_manager.load_profile("home")
 
 # load = Load()
 # load.load_profile(setup_info)

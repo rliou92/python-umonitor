@@ -44,7 +44,22 @@ class ConfManager(Screen):
 			logging.debug(self.profile_data)
 			json.dump(self.profile_data, config_fh, indent=4)
 
-	def view_profile(self, profile_name):
+	def load_profile(self, profile_name):
+
+		if self.config_file_exists == False:
+			raise Exception("Configuration file does not exist.")
+
+		try:
+			target_profile_data = self.profile_data[profile_name]
+		except KeyError:
+			raise Exception("Profile %s does not exist in configuration file." % profile_name)
+
+		logging.debug(self.setup_info)
+		logging.debug(target_profile_data)
+		if self.setup_info == target_profile_data:
+			print("Profile %s is already loaded." % profile_name)
+
+	def view_profiles(self):
 
 		if self.config_file_exists == False:
 			raise Exception("Configuration file does not exist.")

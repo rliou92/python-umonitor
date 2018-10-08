@@ -10,9 +10,9 @@ cdef class Screen:
 		# self.output_info_reply_list = NULL
 
 	def __init__(self):
-		self._open_connection()
-		self._get_default_screen()
-		self._get_edid_atom()
+		self.c = self._open_connection()
+		self.default_screen = self._get_default_screen()
+		self.edid_atom = self._get_edid_atom()
 
 	def __dealloc__(self):
 		xcb_disconnect(self.c)
@@ -20,11 +20,12 @@ cdef class Screen:
 		PyMem_Free(self.screen_resources_reply)
 
 	def _open_connection(self):
-		self.c = xcb_connect(NULL, &self._screenNum)
-		conn_error = xcb_connection_has_error(self.c)
+		cdef xcb_connection_t *c = xcb_connect(NULL, &self._screenNum)
+		conn_error = xcb_connection_has_error(c)
 		if conn_error != 0:
 			raise Exception("Error connecting to X11 server. %s" % CONN_ERROR_LIST[conn_error - 1])
 		logging.info("Connected to X11 server.")
+		return c
 
 	def _get_default_screen(self):
 		cdef const xcb_setup_t *setup
@@ -36,17 +37,20 @@ cdef class Screen:
 		for i in range(0, self._screenNum):
 			xcb_screen_next(&iter)
 
-		self.default_screen = iter.data
+		return iter.data
 
 	def _get_edid_atom(self):
+		cdef xcb_intern_atom_reply_t *edid_atom
+
 		only_if_exists = 1
 		cdef const char *edid_name = "EDID"
 		name_len = len(edid_name)
 		atom_cookie = xcb_intern_atom(self.c, only_if_exists, name_len, edid_name)
-		self.edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
-		while self.edid_atom.atom == XCB_ATOM_NONE:
+		edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
+		while edid_atom.atom == XCB_ATOM_NONE:
 			atom_cookie = xcb_intern_atom(self.c, only_if_exists, name_len, edid_name)
-			self.edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
+			edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
+		return edid_atom
 
 	def _get_output_info(self):
 		cdef xcb_randr_get_output_info_cookie_t output_info_cookie
@@ -80,6 +84,8 @@ cdef class Screen:
 
 			if output_info_reply.crtc:
 				# This output is enabled
+				self.candidate_crtc[output_name] = output_info_reply.crtc
+
 				if output_p[i] == primary_output:
 					# This output is the primary output
 					output_info[output_name]["primary"] = True
@@ -92,8 +98,7 @@ cdef class Screen:
 				output_info[output_name]["rotate_setting"] = crtc_info_reply.rotation
 
 				mode_info = self._get_mode_info(output_info_reply, crtc_info_reply.mode)
-				output_info[output_name]["width"] = mode_info["width"]
-				output_info[output_name]["height"] = mode_info["height"]
+				output_info[output_name] = {**output_info[output_name], **mode_info}
 
 				PyMem_Free(crtc_info_reply)
 
@@ -103,6 +108,10 @@ cdef class Screen:
 
 		return output_info
 
+	def get_candidate_crtcs(self):
+		# output is disabled, pick a crtc
+		candidate_crtcs = xcb_randr_get_output_info_crtcs(output_info_reply)
+		self.candidate_crtc[output_name] =
 
 	cdef _get_mode_info(self, xcb_randr_get_output_info_reply_t *output_info_reply, xcb_randr_mode_t mode):
 		cdef xcb_randr_mode_t *mode_id_p
@@ -121,6 +130,7 @@ cdef class Screen:
 				if mode_info_iterator.data.id == mode_id_p[i]:
 					mode_info["width"] = mode_info_iterator.data.width
 					mode_info["height"] = mode_info_iterator.data.height
+					mode_info["mode_id"] = mode_id_p[i]
 				xcb_randr_mode_info_next(&mode_info_iterator)
 
 		return mode_info
