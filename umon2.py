@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 config_file = "umon2.conf"
 
 conf_manager = ConfManager(config_file)
-# conf_manager.save_profile("home")
+# conf_manager.save_profile("media")
 # conf_manager.delete_profile("home")
 # conf_manager.view_profiles()
 conf_manager.load_profile("home")

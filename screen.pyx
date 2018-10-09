@@ -7,12 +7,11 @@ cdef class Screen:
 
 	def __cinit__(self):
 		self.screen_resources_reply = NULL
-		# self.output_info_reply_list = NULL
 
 	def __init__(self):
-		self.c = self._open_connection()
-		self.default_screen = self._get_default_screen()
-		self.edid_atom = self._get_edid_atom()
+		self._open_connection()
+		self._get_default_screen()
+		self._get_edid_atom()
 
 	def __dealloc__(self):
 		xcb_disconnect(self.c)
@@ -20,12 +19,11 @@ cdef class Screen:
 		PyMem_Free(self.screen_resources_reply)
 
 	def _open_connection(self):
-		cdef xcb_connection_t *c = xcb_connect(NULL, &self._screenNum)
-		conn_error = xcb_connection_has_error(c)
+		self.c = xcb_connect(NULL, &self._screenNum)
+		conn_error = xcb_connection_has_error(self.c)
 		if conn_error != 0:
 			raise Exception("Error connecting to X11 server. %s" % CONN_ERROR_LIST[conn_error - 1])
 		logging.info("Connected to X11 server.")
-		return c
 
 	def _get_default_screen(self):
 		cdef const xcb_setup_t *setup
@@ -37,7 +35,7 @@ cdef class Screen:
 		for i in range(0, self._screenNum):
 			xcb_screen_next(&iter)
 
-		return iter.data
+		self.default_screen = iter.data
 
 	def _get_edid_atom(self):
 		cdef xcb_intern_atom_reply_t *edid_atom
@@ -46,11 +44,10 @@ cdef class Screen:
 		cdef const char *edid_name = "EDID"
 		name_len = len(edid_name)
 		atom_cookie = xcb_intern_atom(self.c, only_if_exists, name_len, edid_name)
-		edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
-		while edid_atom.atom == XCB_ATOM_NONE:
+		self.edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
+		while self.edid_atom.atom == XCB_ATOM_NONE:
 			atom_cookie = xcb_intern_atom(self.c, only_if_exists, name_len, edid_name)
-			edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
-		return edid_atom
+			self.edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
 
 	def _get_output_info(self):
 		cdef xcb_randr_get_output_info_cookie_t output_info_cookie
@@ -58,6 +55,7 @@ cdef class Screen:
 		cdef xcb_randr_output_t primary_output
 		cdef xcb_randr_get_crtc_info_cookie_t crtc_info_cookie
 		cdef xcb_randr_get_crtc_info_reply_t *crtc_info_reply
+		cdef xcb_randr_crtc_t *output_crtcs
 
 		cdef xcb_randr_output_t *output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
 
@@ -66,6 +64,7 @@ cdef class Screen:
 		primary_output = self._get_primary_output()
 
 		output_info = {}
+		candidate_crtcs = {}
 		cdef int i
 		for i in range(outputs_length):
 			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
@@ -79,6 +78,7 @@ cdef class Screen:
 			output_name_bytes = self._get_output_name(output_info_reply)
 			output_name = output_name_bytes.decode("UTF-8")
 			output_info[output_name] = {}
+			self.candidate_crtc = {}
 			edid_name = self._get_edid_name(output_p + i)
 			output_info[output_name]["edid"] = edid_name.decode("UTF-8")
 
@@ -101,17 +101,33 @@ cdef class Screen:
 				output_info[output_name] = {**output_info[output_name], **mode_info}
 
 				PyMem_Free(crtc_info_reply)
+			else:
+				output_crtcs = xcb_randr_get_output_info_crtcs(output_info_reply)
+				self.candidate_crtc[output_name] = [output_crtcs[j] for j in range(output_info_reply.num_crtcs)]
 
 			PyMem_Free(output_info_reply)
 			PyMem_Free(output_name_bytes)
 			PyMem_Free(edid_name)
 
+		self._assign_crtcs()
 		return output_info
 
-	def get_candidate_crtcs(self):
-		# output is disabled, pick a crtc
-		candidate_crtcs = xcb_randr_get_output_info_crtcs(output_info_reply)
-		self.candidate_crtc[output_name] =
+	def _assign_crtcs(self):
+		already_assigned_crtcs = []
+
+		for k in self.candidate_crtc:
+			candidate_crtcs = self.candidate_crtc[k]
+			if isinstance(candidate_crtcs, int):
+				already_assigned_crtcs.append(candidate_crtcs)
+
+		for k in self.candidate_crtc:
+			candidate_crtcs = self.candidate_crtc[k]
+			if isinstance(candidate_crtcs, list):
+				available_crtcs = set(candidate_crtcs) - set(already_assigned_crtcs)
+				chosen_crtc = list(available_crtcs)[0]
+				self.candidate_crtc[k] = chosen_crtc
+				already_assigned_crtcs.append(chosen_crtc)
+
 
 	cdef _get_mode_info(self, xcb_randr_get_output_info_reply_t *output_info_reply, xcb_randr_mode_t mode):
 		cdef xcb_randr_mode_t *mode_id_p

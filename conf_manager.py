@@ -9,6 +9,7 @@ class ConfManager(Screen):
 		super().__init__()
 		self.config_file = config_file
 		self.setup_info = self.get_setup_info()
+
 		try:
 			with open(self.config_file, "r") as config_fh:
 				self.profile_data = json.load(config_fh)
@@ -58,6 +59,27 @@ class ConfManager(Screen):
 		logging.debug(target_profile_data)
 		if self.setup_info == target_profile_data:
 			print("Profile %s is already loaded." % profile_name)
+			return
+
+		# Determine which outputs need to be changed
+		delta_profile_data = {"Screen": target_profile_data["Screen"], "Monitors": {}}
+		for k in self.setup_info["Monitors"]:
+			if k in target_profile_data["Monitors"]:
+				if self.setup_info["Monitors"][k] == target_profile_data["Monitors"][k]:
+					continue
+				delta_profile_data["Monitors"][k] = target_profile_data["Monitors"][k]
+			else:
+				delta_profile_data["Monitors"][k]["mode_id"] = 0
+
+		logging.debug(delta_profile_data)
+
+		# Disable extra outputs
+		self._disable_outputs([k for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k]["mode_id"] == 0])
+		# Change screen size
+		self._change_screen_size(delta_profile_data["Screen"])
+		# Enable outputs
+		self.
+
 
 	def view_profiles(self):
 
