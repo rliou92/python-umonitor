@@ -236,6 +236,17 @@ cdef class Screen:
 		PyMem_Free(output_primary_reply)
 		return primary_output
 
+	def _disable_outputs(self, outputs):
+		for output in outputs:
+			crtc_config_cookie = xcb_randr_set_crtc_config(
+				self.c, cur_disable_crtc->crtc,
+				XCB_CURRENT_TIME,
+				XCB_CURRENT_TIME, 0,
+				0, XCB_NONE,
+				XCB_RANDR_ROTATION_ROTATE_0,
+				0, NULL)
+
+
 	def _get_screen_info(self):
 		return {
 			"width": self.default_screen.width_in_pixels,
