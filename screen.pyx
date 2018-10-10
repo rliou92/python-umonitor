@@ -239,7 +239,7 @@ cdef class Screen:
 	def _disable_outputs(self, outputs):
 		for output in outputs:
 			crtc_config_cookie = xcb_randr_set_crtc_config(
-				self.c, cur_disable_crtc->crtc,
+				self.c, self.candidate_crtc[output],
 				XCB_CURRENT_TIME,
 				XCB_CURRENT_TIME, 0,
 				0, XCB_NONE,
