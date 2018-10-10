@@ -55,8 +55,8 @@ class ConfManager(Screen):
 		except KeyError:
 			raise Exception("Profile %s does not exist in configuration file." % profile_name)
 
-		logging.debug(self.setup_info)
-		logging.debug(target_profile_data)
+		logging.debug("Setup info: %s" % json.dumps(self.setup_info))
+		logging.debug("Target profile data: %s" % json.dumps(target_profile_data))
 		if self.setup_info == target_profile_data:
 			print("Profile %s is already loaded." % profile_name)
 			return
@@ -79,14 +79,16 @@ class ConfManager(Screen):
 			else:
 				delta_profile_data["Monitors"][k]["mode_id"] = 0
 
-		logging.debug("Delta profile: %s" json.dumps(delta_profile_data))
+		logging.debug("Delta profile: %s" % json.dumps(delta_profile_data))
 
+		self.dry_run = False
 		# Disable outputs
+		logging.debug("Candidate crtcs: %s" % json.dumps(self.candidate_crtc))
 		self._disable_outputs([k for k in delta_profile_data["Monitors"]])
 		# Change screen size
 		self._change_screen_size(delta_profile_data["Screen"])
 		# Enable outputs
-		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k]["mode_id"] != 0})
+		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("mode_id", 0) != 0})
 
 
 	def view_profiles(self):

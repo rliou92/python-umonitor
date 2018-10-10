@@ -1,5 +1,7 @@
 from cpython.mem cimport PyMem_Free, PyMem_Malloc
+from cpython.pycapsule cimport PyCapsule_New, PyCapsule_GetPointer
 import logging
+import json
 from libc.stdio cimport snprintf
 from libc.string cimport strcpy
 
@@ -64,7 +66,8 @@ cdef class Screen:
 		primary_output = self._get_primary_output()
 
 		output_info = {}
-		candidate_crtcs = {}
+		self.candidate_crtc = {}
+		self.output_name_to_p = {}
 		cdef int i
 		for i in range(outputs_length):
 			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
@@ -78,9 +81,10 @@ cdef class Screen:
 			output_name_bytes = self._get_output_name(output_info_reply)
 			output_name = output_name_bytes.decode("UTF-8")
 			output_info[output_name] = {}
-			self.candidate_crtc = {}
 			edid_name = self._get_edid_name(output_p + i)
 			output_info[output_name]["edid"] = edid_name.decode("UTF-8")
+
+			self.output_name_to_p[output_name] = PyCapsule_New(<void *> (output_p + i), NULL, NULL)
 
 			if output_info_reply.crtc:
 				# This output is enabled
@@ -127,7 +131,6 @@ cdef class Screen:
 				chosen_crtc = list(available_crtcs)[0]
 				self.candidate_crtc[k] = chosen_crtc
 				already_assigned_crtcs.append(chosen_crtc)
-
 
 	cdef _get_mode_info(self, xcb_randr_get_output_info_reply_t *output_info_reply, xcb_randr_mode_t mode):
 		cdef xcb_randr_mode_t *mode_id_p
@@ -238,6 +241,9 @@ cdef class Screen:
 
 	def _disable_outputs(self, outputs):
 		for output in outputs:
+			logging.debug("Disabling crtc %d output %s" % (self.candidate_crtc[output], output))
+			if self.dry_run == True:
+				continue
 			crtc_config_cookie = xcb_randr_set_crtc_config(
 				self.c, self.candidate_crtc[output],
 				XCB_CURRENT_TIME,
@@ -245,6 +251,55 @@ cdef class Screen:
 				0, XCB_NONE,
 				XCB_RANDR_ROTATION_ROTATE_0,
 				0, NULL)
+
+		if self.dry_run == True:
+			return
+
+		crtc_config_reply = xcb_randr_set_crtc_config_reply(
+			self.c,
+			crtc_config_cookie,
+			&self.e)
+		self.last_time = crtc_config_reply.timestamp
+		PyMem_Free(crtc_config_reply)
+
+	def _change_screen_size(self, screen_info):
+		logging.debug("Changing screen size here: %s" % json.dumps(screen_info))
+		if self.dry_run == True:
+			return
+		xcb_randr_set_screen_size(
+			self.c,
+			self.default_screen.root,
+			<uint16_t> screen_info["width"],
+			<uint16_t> screen_info["height"],
+			<uint32_t> screen_info["widthMM"],
+			<uint32_t> screen_info["heightMM"])
+
+	def _enable_outputs(self, output_info):
+		for output in output_info:
+			logging.debug("Enabling crtc %d output %s" % (self.candidate_crtc[output], output))
+			logging.debug(json.dumps(output_info[output]))
+			if self.dry_run == True:
+				continue
+			crtc_config_cookie = xcb_randr_set_crtc_config(
+				self.c,
+				<xcb_randr_crtc_t> self.candidate_crtc[output],
+				XCB_CURRENT_TIME,
+				XCB_CURRENT_TIME,
+				<int16_t> output_info[output]["x"],
+				<int16_t> output_info[output]["y"],
+				<xcb_randr_mode_t> output_info[output]["mode_id"],
+				<uint16_t> output_info[output]["rotate_setting"],
+				<uint32_t> 1, <xcb_randr_output_t *> PyCapsule_GetPointer(self.output_name_to_p[output], NULL))
+		if self.dry_run == True:
+			return
+		crtc_config_reply = xcb_randr_set_crtc_config_reply(
+			self.c,
+			crtc_config_cookie,
+			&self.e)
+		self.last_time = crtc_config_reply.timestamp
+		PyMem_Free(crtc_config_reply)
+
+
 
 
 	def _get_screen_info(self):
