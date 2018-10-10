@@ -62,7 +62,12 @@ class ConfManager(Screen):
 			return
 
 		if self.setup_info["Monitors"].keys() != target_profile_data["Monitors"].keys():
-			logging.warning("Trying to load a profile that doesn't match the current configuration.")
+			logging.warning("Trying to load a profile that doesn't match the current configuration （monitors don't match)")
+		else:
+			for k in self.setup_info["Monitors"]:
+				if self.setup_info["Monitors"][k]["edid"] != target_profile_data["Monitors"][k]["edid"]:
+					logging.warning("Trying to load a profile that doesn't match the current configuration (edid don't match)")
+					break
 
 		# Determine which outputs need to be changed
 		delta_profile_data = {"Screen": target_profile_data["Screen"], "Monitors": {}}
@@ -74,10 +79,10 @@ class ConfManager(Screen):
 			else:
 				delta_profile_data["Monitors"][k]["mode_id"] = 0
 
-		logging.debug(delta_profile_data)
+		logging.debug("Delta profile: %s" json.dumps(delta_profile_data))
 
-		# Disable extra outputs
-		self._disable_outputs([k for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k]["mode_id"] == 0])
+		# Disable outputs
+		self._disable_outputs([k for k in delta_profile_data["Monitors"]])
 		# Change screen size
 		self._change_screen_size(delta_profile_data["Screen"])
 		# Enable outputs
