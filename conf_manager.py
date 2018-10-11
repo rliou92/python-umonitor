@@ -81,7 +81,7 @@ class ConfManager(Screen):
 
 		logging.debug("Delta profile: %s" % json.dumps(delta_profile_data))
 
-		self.dry_run = False
+		self.dry_run = True
 		# Disable outputs
 		logging.debug("Candidate crtcs: %s" % json.dumps(self.candidate_crtc))
 		self._disable_outputs([k for k in delta_profile_data["Monitors"]])
@@ -91,7 +91,7 @@ class ConfManager(Screen):
 		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("mode_id", 0) != 0})
 
 
-	def view_profiles(self):
+	def view_profiles(self, _):
 
 		if self.config_file_exists == False:
 			raise Exception("Configuration file does not exist.")
