@@ -1,27 +1,47 @@
 #!/usr/bin/python
 
 # from screen import Screen
-from conf_manager import ConfManager
+from conf_manager import ConfManager, view_profiles
 import logging
 import argparse
+import sys
 
 # setup = current state of monitors, their resolutions, positions, etc
 # profile = loaded from configuration file
 
 # PYTHONMALLOC=malloc valgrind --leak-check=full --show-leak-kinds=definite python umon2.py
 
+
+
 logging.basicConfig(level=logging.DEBUG)
 config_file = "umon2.conf"
-conf_manager = ConfManager(config_file)
 
-parser = argparse.ArgumentParser(description="Manage monitor configuration.")
-parser.add_argument("-w", "--view", dest="action", action="store_const", const=conf_manager.view_profiles, help="view configuration file")
-parser.add_argument("profile_name", nargs="?", metavar="PROFILE", help="profile name")
+parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS, description="Manage monitor configuration.")
+
 mut_ex_group = parser.add_mutually_exclusive_group()
-mut_ex_group.add_argument("-s", "--save", dest="action", action="store_const", const=conf_manager.save_profile, help="saves current setup into profile name")
-mut_ex_group.add_argument("-l", "--load", dest="action", action="store_const", const=conf_manager.load_profile, help="load setup from profile name")
-mut_ex_group.add_argument("-d", "--delete", dest="action", action="store_const", const=conf_manager.delete_profile, help="delete profile name from configuration file")
+mut_ex_group.add_argument("-w", "--view", action="store_true", help="view configuration file")
+mut_ex_group.add_argument("-s", "--save", metavar="PROFILE", help="saves current setup into profile name")
+mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
+mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
 
 args = parser.parse_args()
-# print(vars(args))
-args.action(args.profile_name)
+args_list = list(vars(args).keys())
+print(args_list)
+if not args_list:
+	print("Print out current state")
+	sys.exit()
+
+action = args_list[0]
+
+if action == 'view':
+	view_profiles(config_file)
+	sys.exit()
+
+profile_name = args_list[1]
+conf_manager = ConfManager(config_file)
+function_map = {
+	"save": conf_manager.save_profile,
+	"load": conf_manager.load_profile,
+	"delete": conf_manager.delete_profile
+	}
+function_map[action](profile_name)

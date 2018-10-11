@@ -90,10 +90,17 @@ class ConfManager(Screen):
 		# Enable outputs
 		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("mode_id", 0) != 0})
 
+	def autoload(self):
+		pass
 
-	def view_profiles(self, _):
+def view_profiles(config_file):
 
-		if self.config_file_exists == False:
-			raise Exception("Configuration file does not exist.")
+	try:
+		with open(config_file, "r") as config_fh:
+			profile_data = json.load(config_fh)
+	except json.JSONDecodeError:
+		raise Exception("Configuration file is not valid JSON.")
+	except FileNotFoundError:
+		raise Exception("Configuration file does not exist.")
 
-		print(json.dumps(self.profile_data, indent=4))
+	print(json.dumps(profile_data, indent=4))
