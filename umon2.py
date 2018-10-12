@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-# from screen import Screen
 from conf_manager import ConfManager, view_profiles
 import logging
 import argparse
@@ -10,8 +9,6 @@ import sys
 # profile = loaded from configuration file
 
 # PYTHONMALLOC=malloc valgrind --leak-check=full --show-leak-kinds=definite python umon2.py
-
-
 
 logging.basicConfig(level=logging.DEBUG)
 config_file = "umon2.conf"
@@ -24,30 +21,34 @@ mut_ex_group.add_argument("-s", "--save", metavar="PROFILE", help="saves current
 mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
 mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
 mut_ex_group.add_argument("-a", "--autoload", action="store_true", help="load profile that matches with current configuration once")
+parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
 
 args = vars(parser.parse_args())
-action = list(args.keys())[0]
 
-# print(args_list)
-if not action:
-	print("Print out current state")
-	sys.exit()
+# Actions that do not require X11 connection
 
-if action == "view":
+if "view" in args:
 	view_profiles(config_file)
 	sys.exit()
 
+# Actions that require X11 connection
 conf_manager = ConfManager(config_file)
 
-if action == "autoload":
+if not args:
+	conf_manager.view_current_status()
+	sys.exit(0)
+
+if "dry_run" in args:
+	conf_manager.dry_run = args["dry_run"]
+
+if "save" in args:
+	conf_manager.save_profile(args["save"])
+
+if "load" in args:
+	conf_manager.load_profile(args["load"])
+
+if "delete" in args:
+	conf_manager.delete_profile(args["delete"])
+
+if "autoload" in args:
 	conf_manager.autoload()
-	sys.exit()
-
-profile_name = args[action]
-
-function_map = {
-	"save": conf_manager.save_profile,
-	"load": conf_manager.load_profile,
-	"delete": conf_manager.delete_profile
-	}
-function_map[action](profile_name)

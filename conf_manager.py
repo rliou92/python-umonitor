@@ -9,6 +9,7 @@ class ConfManager(Screen):
 		super().__init__()
 		self.config_file = config_file
 		self.setup_info = self.get_setup_info()
+		self.dry_run = False
 
 		try:
 			with open(self.config_file, "r") as config_fh:
@@ -81,7 +82,6 @@ class ConfManager(Screen):
 
 		logging.debug("Delta profile: %s" % json.dumps(delta_profile_data))
 
-		self.dry_run = True
 		# Disable outputs
 		logging.debug("Candidate crtcs: %s" % json.dumps(self.candidate_crtc))
 		self._disable_outputs([k for k in delta_profile_data["Monitors"]])
@@ -91,13 +91,21 @@ class ConfManager(Screen):
 		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("mode_id", 0) != 0})
 
 	def autoload(self):
-		# For each profile:
-		#	Check to see if it matches the setup
+		# Loads first profile that matches the current configuration outputs
 		for profile in self.profile_data:
 			if self.profile_data[profile]["Monitors"].keys() == self.setup_info["Monitors"].keys():
-				logging.debug("Profile %s matches current setup, loading" % (profile))
+				logging.debug("Outputs in profile %s matches current setup, loading" % (profile))
 				self.load_profile(profile)
 				return
+
+	def view_current_status(self):
+		for profile in self.profile_data:
+			out = profile
+			if self.profile_data[profile] == self.setup_info:
+				logging.debug("Profile %s matches current setup" % (profile))
+				out += "*"
+			print(out)
+
 
 
 def view_profiles(config_file):
