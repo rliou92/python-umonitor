@@ -31,6 +31,10 @@ cdef extern from "<xcb/xcb.h>":
 	ctypedef struct xcb_intern_atom_cookie_t:
 		pass
 
+	ctypedef struct xcb_generic_event_t:
+		uint8_t response_type
+		pass
+
 	void xcb_disconnect(xcb_connection_t *c)
 	xcb_setup_t *xcb_get_setup(xcb_connection_t *c)
 	xcb_connection_t *xcb_connect(const char *displayname, int *screenp)
@@ -46,6 +50,8 @@ cdef extern from "<xcb/xcb.h>":
 		xcb_connection_t *c,
  		xcb_intern_atom_cookie_t cookie,
  	 	xcb_generic_error_t **e)
+	xcb_generic_event_t *xcb_wait_for_event(xcb_connection_t *c)
+
 
 
 cdef extern from "<xcb/randr.h>":
@@ -113,6 +119,10 @@ cdef extern from "<xcb/randr.h>":
 
 	ctypedef struct xcb_void_cookie_t:
 		pass
+
+	ctypedef struct xcb_randr_screen_change_notify_event_t:
+		xcb_timestamp_t timestamp
+
 
 	xcb_randr_get_screen_resources_reply_t * xcb_randr_get_screen_resources_reply (
 		xcb_connection_t                         *c,
@@ -207,12 +217,14 @@ cdef extern from "<xcb/randr.h>":
 
 
 
+
 cdef enum:
 	XCB_INTERN_ATOM = 16
 	XCB_ATOM_NONE = 0
 	XCB_CURRENT_TIME = 0L
 	AnyPropertyType = 0L
 	XCB_NONE = 0L
+	XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE = 1
 
 ctypedef enum xcb_randr_rotation_t:
 	XCB_RANDR_ROTATION_ROTATE_0 = 1

@@ -98,6 +98,12 @@ class ConfManager(Screen):
 				self.load_profile(profile)
 				return
 
+	def listen(self):
+		while True:
+			self.wait_for_event()
+			self.setup_info = self.get_setup_info()
+			self.autoload()
+
 	def view_current_status(self):
 		for profile in self.profile_data:
 			out = profile

@@ -21,6 +21,7 @@ mut_ex_group.add_argument("-s", "--save", metavar="PROFILE", help="saves current
 mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
 mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
 mut_ex_group.add_argument("-a", "--autoload", action="store_true", help="load profile that matches with current configuration once")
+mut_ex_group.add_argument("-n", "--listen", action="store_true", help="listens for changes in the setup, and applies the new configuration automatically")
 parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
 
 args = vars(parser.parse_args())
@@ -52,3 +53,6 @@ if "delete" in args:
 
 if "autoload" in args:
 	conf_manager.autoload()
+
+if "listen" in args:
+	conf_manager.listen()

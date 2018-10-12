@@ -9,6 +9,7 @@ cdef class Screen:
 
 	def __cinit__(self):
 		self.screen_resources_reply = NULL
+		self.last_time = <xcb_timestamp_t> 0
 
 	def __init__(self):
 		self._open_connection()
@@ -233,9 +234,9 @@ cdef class Screen:
 		return edid_string
 
 	cdef xcb_randr_output_t _get_primary_output(self):
-		cdef xcb_randr_get_output_primary_cookie_t output_primary_cookie = xcb_randr_get_output_primary(self.c, self.default_screen.root)
-		cdef xcb_randr_get_output_primary_reply_t *output_primary_reply = xcb_randr_get_output_primary_reply(self.c, output_primary_cookie, &self.e)
-		cdef xcb_randr_output_t primary_output = output_primary_reply.output
+		output_primary_cookie = xcb_randr_get_output_primary(self.c, self.default_screen.root)
+		output_primary_reply = xcb_randr_get_output_primary_reply(self.c, output_primary_cookie, &self.e)
+		primary_output = output_primary_reply.output
 		PyMem_Free(output_primary_reply)
 		return primary_output
 
@@ -299,8 +300,18 @@ cdef class Screen:
 		self.last_time = crtc_config_reply.timestamp
 		PyMem_Free(crtc_config_reply)
 
-
-
+	def wait_for_event(self):
+		logging.info("Waiting for event")
+		evt = xcb_wait_for_event(self.c)
+		logging.debug("After the event")
+		if evt.response_type & XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE:
+			logging.info("Received screen change event")
+			randr_evt = <xcb_randr_screen_change_notify_event_t *> evt
+			if randr_evt.timestamp >= self.last_time:
+				logging.info("Event time is after last time of configuration")
+				PyMem_Free(evt)
+				return
+		PyMem_Free(evt)
 
 	def _get_screen_info(self):
 		return {
