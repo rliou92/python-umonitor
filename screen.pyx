@@ -242,7 +242,7 @@ cdef class Screen:
 	def _disable_outputs(self, outputs):
 		for output in outputs:
 			logging.debug("Disabling crtc %d output %s" % (self.candidate_crtc[output], output))
-			if self.dry_run == True:
+			if self.dry_run:
 				continue
 			crtc_config_cookie = xcb_randr_set_crtc_config(
 				self.c, self.candidate_crtc[output],
@@ -252,7 +252,7 @@ cdef class Screen:
 				XCB_RANDR_ROTATION_ROTATE_0,
 				0, NULL)
 
-		if self.dry_run == True:
+		if self.dry_run:
 			return
 
 		crtc_config_reply = xcb_randr_set_crtc_config_reply(
@@ -264,7 +264,7 @@ cdef class Screen:
 
 	def _change_screen_size(self, screen_info):
 		logging.debug("Changing screen size here: %s" % json.dumps(screen_info))
-		if self.dry_run == True:
+		if self.dry_run:
 			return
 		xcb_randr_set_screen_size(
 			self.c,
@@ -278,7 +278,7 @@ cdef class Screen:
 		for output in output_info:
 			logging.debug("Enabling crtc %d output %s" % (self.candidate_crtc[output], output))
 			logging.debug(json.dumps(output_info[output]))
-			if self.dry_run == True:
+			if self.dry_run:
 				continue
 			crtc_config_cookie = xcb_randr_set_crtc_config(
 				self.c,
@@ -290,7 +290,7 @@ cdef class Screen:
 				<xcb_randr_mode_t> output_info[output]["mode_id"],
 				<uint16_t> output_info[output]["rotate_setting"],
 				<uint32_t> 1, <xcb_randr_output_t *> PyCapsule_GetPointer(self.output_name_to_p[output], NULL))
-		if self.dry_run == True:
+		if self.dry_run:
 			return
 		crtc_config_reply = xcb_randr_set_crtc_config_reply(
 			self.c,

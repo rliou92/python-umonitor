@@ -23,22 +23,28 @@ mut_ex_group.add_argument("-w", "--view", action="store_true", help="view config
 mut_ex_group.add_argument("-s", "--save", metavar="PROFILE", help="saves current setup into profile name")
 mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
 mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
+mut_ex_group.add_argument("-a", "--autoload", action="store_true", help="load profile that matches with current configuration once")
 
-args = parser.parse_args()
-args_list = list(vars(args).keys())
-print(args_list)
-if not args_list:
+args = vars(parser.parse_args())
+action = list(args.keys())[0]
+
+# print(args_list)
+if not action:
 	print("Print out current state")
 	sys.exit()
 
-action = args_list[0]
-
-if action == 'view':
+if action == "view":
 	view_profiles(config_file)
 	sys.exit()
 
-profile_name = args_list[1]
 conf_manager = ConfManager(config_file)
+
+if action == "autoload":
+	conf_manager.autoload()
+	sys.exit()
+
+profile_name = args[action]
+
 function_map = {
 	"save": conf_manager.save_profile,
 	"load": conf_manager.load_profile,

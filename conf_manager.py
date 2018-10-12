@@ -91,7 +91,14 @@ class ConfManager(Screen):
 		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("mode_id", 0) != 0})
 
 	def autoload(self):
-		pass
+		# For each profile:
+		#	Check to see if it matches the setup
+		for profile in self.profile_data:
+			if self.profile_data[profile]["Monitors"].keys() == self.setup_info["Monitors"].keys():
+				logging.debug("Profile %s matches current setup, loading" % (profile))
+				self.load_profile(profile)
+				return
+
 
 def view_profiles(config_file):
 
