@@ -240,9 +240,6 @@ cdef class Screen:
 		PyMem_Free(output_primary_reply)
 		return primary_output
 
-	# def _queue_crtcs(self):
-	#
-
 	def _disable_outputs(self, keep_outputs):
 		# Disable all crtcs except the ones that are the same as the target profile
 		crtcs_p = xcb_randr_get_screen_resources_crtcs(self.screen_resources_reply)
@@ -263,7 +260,6 @@ cdef class Screen:
 				0, XCB_NONE,
 				XCB_RANDR_ROTATION_ROTATE_0,
 				0, NULL)
-
 
 		if self.dry_run:
 			return

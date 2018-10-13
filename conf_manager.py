@@ -101,6 +101,7 @@ class ConfManager(Screen):
 				self.load_profile(profile)
 				return
 
+		logging.info("No profile matches current configuration.")
 
 	def view_current_status(self):
 		for profile in self.profile_data:
