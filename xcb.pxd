@@ -216,6 +216,8 @@ cdef extern from "<xcb/randr.h>":
 	xcb_randr_crtc_t *xcb_randr_get_output_info_crtcs (const xcb_randr_get_output_info_reply_t *R)
 	xcb_void_cookie_t xcb_randr_select_input (xcb_connection_t *c, xcb_window_t window, uint16_t enable)
 	xcb_randr_crtc_t *xcb_randr_get_screen_resources_crtcs (const xcb_randr_get_screen_resources_reply_t *R)
+	xcb_void_cookie_t xcb_randr_set_output_primary (xcb_connection_t *c, xcb_window_t window, xcb_randr_output_t output)
+
 
 
 cdef enum:

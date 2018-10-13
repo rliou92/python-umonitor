@@ -299,6 +299,12 @@ cdef class Screen:
 				<xcb_randr_mode_t> output_info[output]["mode_id"],
 				<uint16_t> output_info[output]["rotate_setting"],
 				<uint32_t> 1, <xcb_randr_output_t *> PyCapsule_GetPointer(self.output_name_to_p[output], NULL))
+			if output_info[output].get("primary", False):
+				xcb_randr_set_output_primary(
+					self.c,
+					self.default_screen.root,
+					<xcb_randr_crtc_t> self.candidate_crtc[output]
+				)
 		if self.dry_run:
 			return
 		crtc_config_reply = xcb_randr_set_crtc_config_reply(
