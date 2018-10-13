@@ -104,6 +104,8 @@ class ConfManager(Screen):
 		logging.info("No profile matches current configuration.")
 
 	def view_current_status(self):
+		if not self.profile_data:
+			print("No configuration file found. Start by saving one using 'umon2.py -s <profile_name>'.")
 		for profile in self.profile_data:
 			out = profile
 			if self.profile_data[profile] == self.setup_info:
