@@ -51,6 +51,7 @@ cdef extern from "<xcb/xcb.h>":
  		xcb_intern_atom_cookie_t cookie,
  	 	xcb_generic_error_t **e)
 	xcb_generic_event_t *xcb_wait_for_event(xcb_connection_t *c)
+	int xcb_flush(xcb_connection_t *c)
 
 
 
@@ -65,7 +66,7 @@ cdef extern from "<xcb/randr.h>":
 
 	ctypedef struct xcb_randr_get_screen_resources_reply_t:
 		xcb_timestamp_t config_timestamp
-
+		uint16_t num_crtcs
 
 	ctypedef struct xcb_randr_get_output_primary_cookie_t:
 		pass
@@ -213,9 +214,8 @@ cdef extern from "<xcb/randr.h>":
 	int xcb_randr_get_screen_resources_modes_length (const xcb_randr_get_screen_resources_reply_t *R)
 	void xcb_randr_mode_info_next (xcb_randr_mode_info_iterator_t *i)
 	xcb_randr_crtc_t *xcb_randr_get_output_info_crtcs (const xcb_randr_get_output_info_reply_t *R)
-
-
-
+	xcb_void_cookie_t xcb_randr_select_input (xcb_connection_t *c, xcb_window_t window, uint16_t enable)
+	xcb_randr_crtc_t *xcb_randr_get_screen_resources_crtcs (const xcb_randr_get_screen_resources_reply_t *R)
 
 
 cdef enum:

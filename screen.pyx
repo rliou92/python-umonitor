@@ -240,18 +240,30 @@ cdef class Screen:
 		PyMem_Free(output_primary_reply)
 		return primary_output
 
-	def _disable_outputs(self, outputs):
-		for output in outputs:
-			logging.debug("Disabling crtc %d output %s" % (self.candidate_crtc[output], output))
+	# def _queue_crtcs(self):
+	#
+
+	def _disable_outputs(self, keep_outputs):
+		# Disable all crtcs except the ones that are the same as the target profile
+		crtcs_p = xcb_randr_get_screen_resources_crtcs(self.screen_resources_reply)
+		num_crtcs = self.screen_resources_reply.num_crtcs
+		keep_crtcs = [self.candidate_crtc[output] for output in keep_outputs]
+
+		cdef int i
+		for i in range(num_crtcs):
+			if crtcs_p[i] in keep_crtcs:
+				continue
+			logging.debug("Disabling crtc %d" % (crtcs_p[i]))
 			if self.dry_run:
 				continue
 			crtc_config_cookie = xcb_randr_set_crtc_config(
-				self.c, self.candidate_crtc[output],
+				self.c, crtcs_p[i],
 				XCB_CURRENT_TIME,
 				XCB_CURRENT_TIME, 0,
 				0, XCB_NONE,
 				XCB_RANDR_ROTATION_ROTATE_0,
 				0, NULL)
+
 
 		if self.dry_run:
 			return
@@ -300,18 +312,27 @@ cdef class Screen:
 		self.last_time = crtc_config_reply.timestamp
 		PyMem_Free(crtc_config_reply)
 
-	def wait_for_event(self):
-		logging.info("Waiting for event")
-		evt = xcb_wait_for_event(self.c)
-		logging.debug("After the event")
-		if evt.response_type & XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE:
-			logging.info("Received screen change event")
-			randr_evt = <xcb_randr_screen_change_notify_event_t *> evt
-			if randr_evt.timestamp >= self.last_time:
-				logging.info("Event time is after last time of configuration")
-				PyMem_Free(evt)
-				return
-		PyMem_Free(evt)
+	def listen(self):
+		# Subscribe to screen change events
+		xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
+		xcb_flush(self.c)
+
+		while True:
+			logging.info("Waiting for event")
+			evt = xcb_wait_for_event(self.c)
+			logging.debug("After the event")
+			if evt.response_type & XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE:
+				logging.info("Received screen change event")
+				randr_evt = <xcb_randr_screen_change_notify_event_t *> evt
+				if randr_evt.timestamp >= self.last_time:
+					logging.info("Event time is after last time of configuration")
+					self.setup_info = self.get_setup_info()
+					self.autoload()
+			PyMem_Free(evt)
+
+	def autoload(self):
+		# To be overwritten
+		pass
 
 	def _get_screen_info(self):
 		return {

@@ -1,7 +1,6 @@
 from screen import Screen
 import json
 import logging
-import os
 
 class ConfManager(Screen):
 
@@ -63,7 +62,7 @@ class ConfManager(Screen):
 			return
 
 		if self.setup_info["Monitors"].keys() != target_profile_data["Monitors"].keys():
-			logging.warning("Trying to load a profile that doesn't match the current configuration （monitors don't match)")
+			logging.warning("Trying to load a profile that doesn't match the current configuration（monitors don't match)")
 		else:
 			for k in self.setup_info["Monitors"]:
 				if self.setup_info["Monitors"][k]["edid"] != target_profile_data["Monitors"][k]["edid"]:
@@ -71,20 +70,24 @@ class ConfManager(Screen):
 					break
 
 		# Determine which outputs need to be changed
+		keep_outputs = []
 		delta_profile_data = {"Screen": target_profile_data["Screen"], "Monitors": {}}
 		for k in self.setup_info["Monitors"]:
 			if k in target_profile_data["Monitors"]:
 				if self.setup_info["Monitors"][k] == target_profile_data["Monitors"][k]:
+					keep_outputs.append(k)
 					continue
 				delta_profile_data["Monitors"][k] = target_profile_data["Monitors"][k]
 			else:
+				delta_profile_data["Monitors"][k] = {}
 				delta_profile_data["Monitors"][k]["mode_id"] = 0
+
 
 		logging.debug("Delta profile: %s" % json.dumps(delta_profile_data))
 
 		# Disable outputs
 		logging.debug("Candidate crtcs: %s" % json.dumps(self.candidate_crtc))
-		self._disable_outputs([k for k in delta_profile_data["Monitors"]])
+		self._disable_outputs(keep_outputs)
 		# Change screen size
 		self._change_screen_size(delta_profile_data["Screen"])
 		# Enable outputs
@@ -98,11 +101,6 @@ class ConfManager(Screen):
 				self.load_profile(profile)
 				return
 
-	def listen(self):
-		while True:
-			self.wait_for_event()
-			self.setup_info = self.get_setup_info()
-			self.autoload()
 
 	def view_current_status(self):
 		for profile in self.profile_data:
@@ -111,8 +109,6 @@ class ConfManager(Screen):
 				logging.debug("Profile %s matches current setup" % (profile))
 				out += "*"
 			print(out)
-
-
 
 def view_profiles(config_file):
 
