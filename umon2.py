@@ -5,7 +5,6 @@ import argparse
 import sys
 from screen import Screen
 import json
-import logging
 
 class Umonitor(Screen):
 
@@ -24,45 +23,23 @@ class Umonitor(Screen):
 		else:
 			self.config_file_exists = True
 
-		self.parse_args()
+	def run(self):
+		if self.save:
+			self.save_profile()
+		elif self.load:
+			self.load_profile()
+		elif self._autoload:
+			self.autoload()
+		elif self.view_profiles:
+			self.view_profiles()
+		else:
+			self.view_current_status()
 
-	def parse_args(self):
-		parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS, description="Manage monitor configuration.")
-
-		mut_ex_group = parser.add_mutually_exclusive_group()
-		mut_ex_group.add_argument("-w", "--view", action="store_true", help="view configuration file")
-		mut_ex_group.add_argument("-s", "--save", metavar="PROFILE", help="saves current setup into profile name")
-		mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
-		mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
-		mut_ex_group.add_argument("-a", "--autoload", action="store_true", help="load profile that matches with current configuration once")
-		mut_ex_group.add_argument("-n", "--listen", action="store_true", help="listens for changes in the setup, and applies the new configuration automatically")
-		parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
-		parser.add_argument("-v", "--verbose", action="count", help="set verbosity level, 1 = info, 2 = debug")
-
-		args = parser.parse_args(namespace=self)
-
-		logging_map = {
-			1: logging.INFO,
-			2: logging.DEBUG
-		}
-		logging.setLevel(logging_map[self.verbose])
-
-		actions = {
-			"save": self.save_profile,
-			"load": self.load_profile,
-			"delete": self.delete_profile,
-			"autoload": self.autoload,
-			"listen": self.listen,
-			"view": self.view_profiles
-		}
-
-		for k in args:
-			action_map[k]()
-
-
+	def save_profile(self, profile_name=None):
+		if profile_name is None:
+			profile_name = self.save
+		self.connect_to_server()
 		self.setup_info = self.get_setup_info()
-
-	def save_profile(self, profile_name):
 
 		with open(self.config_file, "w") as config_fh:
 			# TODO check for overwriting
@@ -74,7 +51,9 @@ class Umonitor(Screen):
 
 		print("Profile %s saved." % (profile_name))
 
-	def delete_profile(self, profile_name):
+	def delete_profile(self, profile_name=None):
+		if profile_name is None:
+			profile_name = self.delete
 
 		if self.config_file_exists == False:
 			raise Exception("Configuration file does not exist.")
@@ -92,7 +71,11 @@ class Umonitor(Screen):
 
 		print("Profile %s deleted." % (profile_name))
 
-	def load_profile(self, profile_name):
+	def load_profile(self, profile_name=None):
+		if profile_name is None:
+			profile_name = self.load
+		self.connect_to_server()
+		self.setup_info = self.get_setup_info()
 
 		if self.config_file_exists == False:
 			raise Exception("Configuration file does not exist.")
@@ -143,6 +126,9 @@ class Umonitor(Screen):
 		print("Profile %s loaded" % (profile_name))
 
 	def autoload(self):
+		self.connect_to_server()
+		self.setup_info = self.get_setup_info()
+
 		# Loads first profile that matches the current configuration outputs
 		for profile in self.profile_data:
 			if self.profile_data[profile]["Monitors"].keys() == self.setup_info["Monitors"].keys():
@@ -174,52 +160,30 @@ def main():
 	logging.basicConfig()
 	config_file = "umon2.conf"
 
-	# Actions that do not require X11 connection
+	parser = argparse.ArgumentParser(description="Manage monitor configuration.")
 
-	if umon.get("view_profiles", False):
-		umon.view_profiles()
-		sys.exit(0)
-
-	# Actions that require X11 connection
-	umon.connect_to_server()
-
-	if not args:
-		umon.view_current_status()
-		sys.exit(0)
-
-
-
-	if "view" in args:
-		view_profiles(config_file)
-		sys.exit()
+	mut_ex_group = parser.add_mutually_exclusive_group()
+	mut_ex_group.add_argument("-w", "--view", action="store_true", help="view configuration file")
+	mut_ex_group.add_argument("-s", "--save", metavar="PROFILE", help="saves current setup into profile name")
+	mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
+	mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
+	mut_ex_group.add_argument("-a", "--autoload", dest="_autoload", action="store_true", help="load profile that matches with current configuration once")
+	mut_ex_group.add_argument("-n", "--listen", action="store_true", help="listens for changes in the setup, and applies the new configuration automatically")
+	parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
+	parser.add_argument("-v", "--verbose", default=0, action="count", help="set verbosity level, 1 = info, 2 = debug")
 
 	umon = Umonitor(config_file)
+	parser.parse_args(namespace=umon)
 
-	if "verbose" in args:
-		del args["verbose"]
+	logging_map = {
+		0: logging.WARNING,
+		1: logging.INFO,
+		2: logging.DEBUG
+	}
+	logger = logging.getLogger()
+	logger.setLevel(logging_map[umon.verbose])
 
-
-	if "dry_run" in args:
-		umon.dry_run = args["dry_run"]
-		del args["dry_run"]
-
-	def save(umon):
-		umon.save_profile(args["save"])
-
-	def load(umon):
-		umon.load_profile(args["load"])
-
-	def delete(umon):
-		umon.delete_profile(args["delete"])
-
-	def autoload(umon):
-		umon.autoload()
-
-	def listen(umon):
-		umon.listen()
-
-
-
+	umon.run()
 
 
 if __name__ == "__main__":
