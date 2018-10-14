@@ -4,7 +4,9 @@ import logging
 import json
 from libc.stdio cimport snprintf
 from libc.string cimport strcpy
-import time
+
+# Seems like certain cdefs are necessary, sometimes when I don't include the
+# event detection doesn't work
 
 cdef class Screen:
 
@@ -63,7 +65,6 @@ cdef class Screen:
 		cdef xcb_randr_crtc_t *output_crtcs
 
 		cdef xcb_randr_output_t *output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
-		# output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
 
 		outputs_length = xcb_randr_get_screen_resources_outputs_length(self.screen_resources_reply)
 
@@ -161,7 +162,6 @@ cdef class Screen:
 
 	cdef char * _get_output_name(self, xcb_randr_get_output_info_reply_t *output_info_reply):
 		cdef uint8_t *output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
-		# output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
 
 		output_name_length = xcb_randr_get_output_info_name_length(output_info_reply)
 		output_name = <char *> PyMem_Malloc((output_name_length + 1) * sizeof(char))
