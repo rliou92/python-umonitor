@@ -11,7 +11,7 @@ cdef class Screen:
 		self.screen_resources_reply = NULL
 		self.last_time = <xcb_timestamp_t> 0
 
-	def __init__(self):
+	def connect_to_server(self):
 		self._open_connection()
 		self._get_default_screen()
 		self._get_edid_atom()
