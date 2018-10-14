@@ -32,8 +32,24 @@ class Umonitor(Screen):
 			self.autoload()
 		elif self.view:
 			self.view_profiles()
+		elif self.gap:
+			self.get_active_profile()
+		elif self._listen:
+			self.listen()
 		else:
 			self.view_current_status()
+
+	def get_active_profile(self):
+		self.connect_to_server()
+		self.setup_info = self.get_setup_info()
+
+		if not self.profile_data:
+			print("No configuration file found. Start by saving one using 'umon2.py -s <profile_name>'.")
+
+		for profile in self.profile_data:
+			if self.profile_data[profile] == self.setup_info:
+				logging.debug("Profile %s matches current setup" % (profile))
+				print(profile)
 
 	def save_profile(self, profile_name=None):
 		if profile_name is None:
@@ -104,7 +120,8 @@ class Umonitor(Screen):
 		delta_profile_data = {"Screen": target_profile_data["Screen"], "Monitors": {}}
 		for k in self.setup_info["Monitors"]:
 			if k in target_profile_data["Monitors"]:
-				if self.setup_info["Monitors"][k] == target_profile_data["Monitors"][k]:
+				if self.setup_info["Monitors"][k] == target_profile_data["Monitors"][k] \
+					and target_profile_data["Monitors"][k].get("mode_id", False):
 					keep_outputs.append(k)
 					continue
 				delta_profile_data["Monitors"][k] = target_profile_data["Monitors"][k]
@@ -117,6 +134,7 @@ class Umonitor(Screen):
 
 		# Disable outputs
 		logging.debug("Candidate crtcs: %s" % json.dumps(self.candidate_crtc))
+		logging.debug("Keep outputs: %s" % json.dumps(keep_outputs))
 		self._disable_outputs(keep_outputs)
 		# Change screen size
 		self._change_screen_size(delta_profile_data["Screen"])
@@ -152,6 +170,9 @@ class Umonitor(Screen):
 				out += "*"
 			print(out)
 
+		logging.debug("Current status: %s" % self.setup_info)
+		logging.debug("Candidate crtcs: %s" % self.candidate_crtc)
+
 	def view_profiles(self):
 		print(json.dumps(self.profile_data, indent=4))
 
@@ -171,7 +192,8 @@ def main():
 	mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
 	mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
 	mut_ex_group.add_argument("-a", "--autoload", dest="_autoload", action="store_true", help="load profile that matches with current configuration once")
-	mut_ex_group.add_argument("-n", "--listen", action="store_true", help="listens for changes in the setup, and applies the new configuration automatically")
+	mut_ex_group.add_argument("-n", "--listen", dest="_listen", action="store_true", help="listens for changes in the setup, and applies the new configuration automatically")
+	mut_ex_group.add_argument("-g", "--get_active_profile", dest="gap", action="store_true", help="returns current active profile")
 	parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
 	parser.add_argument("-v", "--verbose", default=0, action="count", help="set verbosity level, 1 = info, 2 = debug")
 

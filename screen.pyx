@@ -41,7 +41,7 @@ cdef class Screen:
 		self.default_screen = iter.data
 
 	def _get_edid_atom(self):
-		# cdef xcb_intern_atom_reply_t *edid_atom
+		cdef xcb_intern_atom_reply_t *edid_atom
 
 		only_if_exists = 1
 		cdef const char *edid_name = "EDID"
@@ -53,15 +53,15 @@ cdef class Screen:
 			self.edid_atom = xcb_intern_atom_reply(self.c, atom_cookie, &self.e)
 
 	def _get_output_info(self):
-		# cdef xcb_randr_get_output_info_cookie_t output_info_cookie
-		# cdef xcb_randr_get_output_info_reply_t *output_info_reply
-		# cdef xcb_randr_output_t primary_output
-		# cdef xcb_randr_get_crtc_info_cookie_t crtc_info_cookie
-		# cdef xcb_randr_get_crtc_info_reply_t *crtc_info_reply
-		# cdef xcb_randr_crtc_t *output_crtcs
+		cdef xcb_randr_get_output_info_cookie_t output_info_cookie
+		cdef xcb_randr_get_output_info_reply_t *output_info_reply
+		cdef xcb_randr_output_t primary_output
+		cdef xcb_randr_get_crtc_info_cookie_t crtc_info_cookie
+		cdef xcb_randr_get_crtc_info_reply_t *crtc_info_reply
+		cdef xcb_randr_crtc_t *output_crtcs
 
-		# cdef xcb_randr_output_t *output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
-		output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
+		cdef xcb_randr_output_t *output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
+		# output_p = xcb_randr_get_screen_resources_outputs(self.screen_resources_reply)
 
 		outputs_length = xcb_randr_get_screen_resources_outputs_length(self.screen_resources_reply)
 
@@ -135,8 +135,8 @@ cdef class Screen:
 				already_assigned_crtcs.append(chosen_crtc)
 
 	cdef _get_mode_info(self, xcb_randr_get_output_info_reply_t *output_info_reply, xcb_randr_mode_t mode):
-		# cdef xcb_randr_mode_t *mode_id_p
-		# cdef xcb_randr_mode_info_iterator_t mode_info_iterator
+		cdef xcb_randr_mode_t *mode_id_p
+		cdef xcb_randr_mode_info_iterator_t mode_info_iterator
 
 		num_output_modes = xcb_randr_get_output_info_modes_length(output_info_reply)
 		mode_id_p = xcb_randr_get_output_info_modes(output_info_reply)
@@ -158,8 +158,8 @@ cdef class Screen:
 
 
 	cdef char * _get_output_name(self, xcb_randr_get_output_info_reply_t *output_info_reply):
-		# cdef uint8_t *output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
-		output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
+		cdef uint8_t *output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
+		# output_name_raw = xcb_randr_get_output_info_name(output_info_reply)
 
 		output_name_length = xcb_randr_get_output_info_name_length(output_info_reply)
 		output_name = <char *> PyMem_Malloc((output_name_length + 1) * sizeof(char))
@@ -175,9 +175,9 @@ cdef class Screen:
 		cdef int i, j, model_name_found, edid_length
 		cdef uint8_t delete = 0
 		cdef uint8_t pending = 0
-		# cdef xcb_randr_get_output_property_cookie_t output_property_cookie
-		# cdef xcb_randr_get_output_property_reply_t *output_property_reply
-		# cdef uint8_t *edid
+		cdef xcb_randr_get_output_property_cookie_t output_property_cookie
+		cdef xcb_randr_get_output_property_reply_t *output_property_reply
+		cdef uint8_t *edid
 
 		cdef char vendor[4]
 		cdef char modelname[13]
@@ -248,9 +248,11 @@ cdef class Screen:
 		crtcs_p = xcb_randr_get_screen_resources_crtcs(self.screen_resources_reply)
 		num_crtcs = self.screen_resources_reply.num_crtcs
 		keep_crtcs = [self.candidate_crtc[output] for output in keep_outputs]
+		logging.debug("Keep crtcs: %s" % json.dumps(keep_crtcs))
 
 		cdef int i
 		for i in range(num_crtcs):
+			logging.debug("Checking to see if crtc %d should be disabled" % crtcs_p[i])
 			if crtcs_p[i] in keep_crtcs:
 				continue
 			logging.debug("Disabling crtc %d" % (crtcs_p[i]))
@@ -318,11 +320,16 @@ cdef class Screen:
 		PyMem_Free(crtc_config_reply)
 
 	def listen(self):
+		self.connect_to_server()
+
 		# Subscribe to screen change events
-		xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
-		xcb_flush(self.c)
+		# xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
+		# xcb_flush(self.c)
 
 		while True:
+			xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
+			xcb_flush(self.c)
+
 			logging.info("Waiting for event")
 			evt = xcb_wait_for_event(self.c)
 			logging.debug("After the event")
