@@ -26,8 +26,12 @@ class ConfManager(Screen):
 		with open(self.config_file, "w") as config_fh:
 			# TODO check for overwriting
 			logging.debug(self.profile_data)
+			if self.profile_data[profile_name]:
+				logging.warning("Overwriting previous profile")
 			self.profile_data[profile_name] = self.setup_info
 			json.dump(self.profile_data, config_fh, indent=4)
+
+		print("Profile %s saved." % (profile_name))
 
 	def delete_profile(self, profile_name):
 
@@ -44,6 +48,8 @@ class ConfManager(Screen):
 		with open(self.config_file, "w") as config_fh:
 			logging.debug(self.profile_data)
 			json.dump(self.profile_data, config_fh, indent=4)
+
+		print("Profile %s deleted." % (profile_name))
 
 	def load_profile(self, profile_name):
 
@@ -93,11 +99,14 @@ class ConfManager(Screen):
 		# Enable outputs
 		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("mode_id", 0) != 0})
 
+		print("Profile %s loaded" % (profile_name))
+
 	def autoload(self):
 		# Loads first profile that matches the current configuration outputs
 		for profile in self.profile_data:
 			if self.profile_data[profile]["Monitors"].keys() == self.setup_info["Monitors"].keys():
 				logging.debug("Outputs in profile %s matches current setup, loading" % (profile))
+				print("Profile %s found to match, loading..." % (profile))
 				self.load_profile(profile)
 				return
 
