@@ -30,7 +30,7 @@ class Umonitor(Screen):
 			self.load_profile()
 		elif self._autoload:
 			self.autoload()
-		elif self.view_profiles:
+		elif self.view:
 			self.view_profiles()
 		else:
 			self.view_current_status()
@@ -140,6 +140,9 @@ class Umonitor(Screen):
 		logging.info("No profile matches current configuration.")
 
 	def view_current_status(self):
+		self.connect_to_server()
+		self.setup_info = self.get_setup_info()
+
 		if not self.profile_data:
 			print("No configuration file found. Start by saving one using 'umon2.py -s <profile_name>'.")
 		for profile in self.profile_data:
