@@ -4,6 +4,7 @@ import logging
 import json
 from libc.stdio cimport snprintf
 from libc.string cimport strcpy
+import time
 
 cdef class Screen:
 
@@ -15,6 +16,7 @@ cdef class Screen:
 		self._open_connection()
 		self._get_default_screen()
 		self._get_edid_atom()
+		self.connected = True
 
 	def __dealloc__(self):
 		xcb_disconnect(self.c)
@@ -323,16 +325,13 @@ cdef class Screen:
 		self.connect_to_server()
 
 		# Subscribe to screen change events
-		# xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
-		# xcb_flush(self.c)
+		xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
+		xcb_flush(self.c)
 
 		while True:
-			xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
-			xcb_flush(self.c)
-
 			logging.info("Waiting for event")
 			evt = xcb_wait_for_event(self.c)
-			logging.debug("After the event")
+			logging.debug("After the event, event response type is %d" % evt.response_type)
 			if evt.response_type & XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE:
 				logging.info("Received screen change event")
 				randr_evt = <xcb_randr_screen_change_notify_event_t *> evt

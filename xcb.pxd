@@ -124,11 +124,14 @@ cdef extern from "<xcb/randr.h>":
 	ctypedef struct xcb_randr_screen_change_notify_event_t:
 		xcb_timestamp_t timestamp
 
+	ctypedef struct xcb_randr_output_change_t:
+		xcb_timestamp_t    timestamp
 
 	xcb_randr_get_screen_resources_reply_t * xcb_randr_get_screen_resources_reply (
 		xcb_connection_t                         *c,
 		xcb_randr_get_screen_resources_cookie_t   cookie,
 		xcb_generic_error_t                     **e)
+
 
 	xcb_randr_get_screen_resources_cookie_t xcb_randr_get_screen_resources ( xcb_connection_t *c, xcb_window_t window)
 
@@ -226,7 +229,17 @@ cdef enum:
 	XCB_CURRENT_TIME = 0L
 	AnyPropertyType = 0L
 	XCB_NONE = 0L
-	XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE = 1
+
+ctypedef enum xcb_randr_notify_mask_t:
+	XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE = 1,
+	XCB_RANDR_NOTIFY_MASK_CRTC_CHANGE = 2,
+	XCB_RANDR_NOTIFY_MASK_OUTPUT_CHANGE = 4,
+	XCB_RANDR_NOTIFY_MASK_OUTPUT_PROPERTY = 8,
+	XCB_RANDR_NOTIFY_MASK_PROVIDER_CHANGE = 16,
+	XCB_RANDR_NOTIFY_MASK_PROVIDER_PROPERTY = 32,
+	XCB_RANDR_NOTIFY_MASK_RESOURCE_CHANGE = 64,
+	XCB_RANDR_NOTIFY_MASK_LEASE = 128
+
 
 ctypedef enum xcb_randr_rotation_t:
 	XCB_RANDR_ROTATION_ROTATE_0 = 1

@@ -11,6 +11,7 @@ class Umonitor(Screen):
 	def __init__(self, config_file):
 		self.config_file = config_file
 		self.dry_run = False
+		self.connected = False
 
 		try:
 			with open(self.config_file, "r") as config_fh:
@@ -90,8 +91,10 @@ class Umonitor(Screen):
 	def load_profile(self, profile_name=None):
 		if profile_name is None:
 			profile_name = self.load
-		self.connect_to_server()
-		self.setup_info = self.get_setup_info()
+
+		if self.connected == False:
+			self.connect_to_server()
+			self.setup_info = self.get_setup_info()
 
 		if self.config_file_exists == False:
 			raise Exception("Configuration file does not exist.")
@@ -144,8 +147,9 @@ class Umonitor(Screen):
 		print("Profile %s loaded" % (profile_name))
 
 	def autoload(self):
-		self.connect_to_server()
-		self.setup_info = self.get_setup_info()
+		if self.connected == False:
+			self.connect_to_server()
+			self.setup_info = self.get_setup_info()
 
 		# Loads first profile that matches the current configuration outputs
 		for profile in self.profile_data:
