@@ -50,7 +50,7 @@ cdef extern from "<xcb/xcb.h>":
 		xcb_connection_t *c,
  		xcb_intern_atom_cookie_t cookie,
  	 	xcb_generic_error_t **e)
-	xcb_generic_event_t *xcb_wait_for_event(xcb_connection_t *c)
+	xcb_generic_event_t *xcb_wait_for_event(xcb_connection_t *c) nogil
 	int xcb_flush(xcb_connection_t *c)
 
 

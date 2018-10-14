@@ -6,7 +6,7 @@ extensions = [
 	Extension(
 		"*",
 		["*.pyx"],
-		libraries = ["X11", "xcb-randr", "xcb"]
+		libraries = ["xcb-randr", "xcb"]
 	),
 ]
 

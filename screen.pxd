@@ -13,3 +13,4 @@ cdef class Screen:
 	cdef char * _get_output_name(self, xcb_randr_get_output_info_reply_t *output_info_reply)
 	cdef char * _get_edid_name(self, xcb_randr_output_t * output_p)
 	cdef xcb_randr_output_t _get_primary_output(self)
+	# cdef handler(cdef int signum)
