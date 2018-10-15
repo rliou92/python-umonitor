@@ -2,14 +2,16 @@
 
 import logging
 import argparse
-import sys
 from screen import Screen
 import json
+import os
+import subprocess
 
 class Umonitor(Screen):
 
-	def __init__(self, config_file):
-		self.config_file = config_file
+	def __init__(self, config_folder):
+		self.config_folder = config_folder
+		self.config_file = config_folder + "umon2.conf"
 		self.dry_run = False
 		self.connected = False
 
@@ -159,6 +161,7 @@ class Umonitor(Screen):
 				logging.debug("Outputs in profile %s matches current setup, loading" % (profile))
 				print("Profile %s found to match, loading..." % (profile))
 				self.load_profile(profile)
+				self.exec_scripts(profile)
 				return
 
 		logging.info("No profile matches current configuration.")
@@ -182,13 +185,23 @@ class Umonitor(Screen):
 	def view_profiles(self):
 		print(json.dumps(self.profile_data, indent=4))
 
+	def exec_scripts(self, profile_name):
+		os.environ["UMONITOR_PROFILE"] = profile_name
+		for script in os.listdir(self.config_folder):
+			subprocess.run(script)
+
 def main():
 	# setup = current state of monitors, their resolutions, positions, etc
 	# profile = loaded from configuration file
 
 	# PYTHONMALLOC=malloc valgrind --leak-check=full --show-leak-kinds=definite python umon2.py
 	logging.basicConfig()
-	config_file = "umon2.conf"
+
+	try:
+		config_folder = os.environ["HOME"]
+	except KeyError:
+		raise Exception("Need home environment variable to locate configuration file.")
+	config_folder+= "/.config/umon"
 
 	parser = argparse.ArgumentParser(description="Manage monitor configuration.")
 
@@ -203,7 +216,7 @@ def main():
 	parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
 	parser.add_argument("-v", "--verbose", default=0, action="count", help="set verbosity level, 1 = info, 2 = debug")
 
-	umon = Umonitor(config_file)
+	umon = Umonitor(config_folder)
 	parser.parse_args(namespace=umon)
 
 	logging_map = {
