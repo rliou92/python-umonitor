@@ -37,6 +37,8 @@ class Umonitor(Screen):
 			self.get_active_profile()
 		elif self._listen:
 			self.listen()
+		elif self.delete:
+			self.delete_profile()
 		else:
 			self.view_current_status()
 
@@ -61,7 +63,7 @@ class Umonitor(Screen):
 		with open(self.config_file, "w") as config_fh:
 			# TODO check for overwriting
 			logging.debug(self.profile_data)
-			if self.profile_data[profile_name]:
+			if self.profile_data.get(profile_name, False):
 				logging.warning("Overwriting previous profile")
 			self.profile_data[profile_name] = self.setup_info
 			json.dump(self.profile_data, config_fh, indent=4)
