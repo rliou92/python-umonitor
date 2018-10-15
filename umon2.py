@@ -11,7 +11,7 @@ class Umonitor(Screen):
 
 	def __init__(self, config_folder):
 		self.config_folder = config_folder
-		self.config_file = config_folder + "umon2.conf"
+		self.config_file = config_folder + "/umon2.conf"
 		self.dry_run = False
 		self.connected = False
 
@@ -188,7 +188,9 @@ class Umonitor(Screen):
 	def exec_scripts(self, profile_name):
 		os.environ["UMONITOR_PROFILE"] = profile_name
 		for script in os.listdir(self.config_folder):
-			subprocess.run(script)
+			if script != "umon2.conf":
+				logging.info("Running script %s" % script)
+				subprocess.run("./" + self.config_folder + "/" + script)
 
 def main():
 	# setup = current state of monitors, their resolutions, positions, etc
