@@ -14,6 +14,7 @@ class Umonitor(Screen):
 		self.config_file = config_folder + "/umon2.conf"
 		self.dry_run = False
 		self.connected = False
+		self._exec_scripts = True
 
 		try:
 			with open(self.config_file, "r") as config_fh:
@@ -142,13 +143,19 @@ class Umonitor(Screen):
 		# Disable outputs
 		logging.debug("Candidate crtcs: %s" % json.dumps(self.candidate_crtc))
 		logging.debug("Keep outputs: %s" % json.dumps(keep_outputs))
-		self._disable_outputs(keep_outputs)
+		if self.force_load:
+			self._disable_outputs([])
+		else:
+			self._disable_outputs(keep_outputs)
 		# Change screen size
 		self._change_screen_size(delta_profile_data["Screen"])
 		# Enable outputs
 		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("mode_id", 0) != 0})
 
 		print("Profile %s loaded" % (profile_name))
+
+		if self._exec_scripts:
+			self.exec_scripts(profile_name)
 
 	def autoload(self):
 		if self.connected == False:
@@ -161,7 +168,6 @@ class Umonitor(Screen):
 				logging.debug("Outputs in profile %s matches current setup, loading" % (profile))
 				print("Profile %s found to match, loading..." % (profile))
 				self.load_profile(profile)
-				self.exec_scripts(profile)
 				return
 
 		logging.info("No profile matches current configuration.")
@@ -174,7 +180,8 @@ class Umonitor(Screen):
 			print("No configuration file found. Start by saving one using 'umon2.py -s <profile_name>'.")
 		for profile in self.profile_data:
 			out = profile
-			if self.profile_data[profile] == self.setup_info:
+			logging.debug("Profile data: %s" % self.profile_data[profile])
+			if self.profile_data[profile]["Monitors"] == self.setup_info["Monitors"]:
 				logging.debug("Profile %s matches current setup" % (profile))
 				out += "*"
 			print(out)
@@ -188,9 +195,9 @@ class Umonitor(Screen):
 	def exec_scripts(self, profile_name):
 		os.environ["UMONITOR_PROFILE"] = profile_name
 		for script in os.listdir(self.config_folder):
-			if script != "umon2.conf":
+			if script != "umon2.conf" and not script.startswith("."):
 				logging.info("Running script %s" % script)
-				subprocess.run("./" + self.config_folder + "/" + script)
+				subprocess.run(self.config_folder + "/" + script)
 
 def main():
 	# setup = current state of monitors, their resolutions, positions, etc
@@ -203,7 +210,7 @@ def main():
 		config_folder = os.environ["HOME"]
 	except KeyError:
 		raise Exception("Need home environment variable to locate configuration file.")
-	config_folder+= "/.config/umon"
+	config_folder += "/.config/umon"
 
 	parser = argparse.ArgumentParser(description="Manage monitor configuration.")
 
@@ -217,6 +224,7 @@ def main():
 	mut_ex_group.add_argument("-g", "--get_active_profile", dest="gap", action="store_true", help="returns current active profile")
 	parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
 	parser.add_argument("-v", "--verbose", default=0, action="count", help="set verbosity level, 1 = info, 2 = debug")
+	parser.add_argument("-f", "--force", dest="force_load", action="store_true", help="disable all outputs even if they do not change during loading")
 
 	umon = Umonitor(config_folder)
 	parser.parse_args(namespace=umon)
