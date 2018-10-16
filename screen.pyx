@@ -155,6 +155,7 @@ cdef class Screen:
 					mode_info["width"] = mode_info_iterator.data.width
 					mode_info["height"] = mode_info_iterator.data.height
 					mode_info["mode_id"] = mode_id_p[i]
+					# logging.debug("Dot clock: %s" % json.dumps(mode_info_iterator.data.dot_clock))
 				xcb_randr_mode_info_next(&mode_info_iterator)
 
 		return mode_info
@@ -279,19 +280,25 @@ cdef class Screen:
 		PyMem_Free(crtc_config_reply)
 
 	def _change_screen_size(self, screen_info):
+		# Recover widthMM, heightMM?
+		# As I understand, not that important
 		logging.debug("Changing screen size here: %s" % json.dumps(screen_info))
 		if self.dry_run:
 			return
 		xcb_randr_set_screen_size(
 			self.c,
-			self.default_screen.root,
+			<xcb_window_t> self.default_screen.root,
 			<uint16_t> screen_info["width"],
 			<uint16_t> screen_info["height"],
-			<uint32_t> screen_info["widthMM"],
-			<uint32_t> screen_info["heightMM"])
+			<uint16_t> screen_info["widthMM"],
+			<uint16_t> screen_info["heightMM"])
 
 	def _enable_outputs(self, output_info):
 		for output in output_info:
+			# Mode id seems to change on a laptop I use, so trying to recover it instead
+			# Recover mode id
+			# self._get_mode_id(output, output_info[output]["x"], output_info[output]["y"])
+
 			logging.debug("Enabling crtc %d output %s" % (self.candidate_crtc[output], output))
 			logging.debug(json.dumps(output_info[output]))
 			if self.dry_run:
@@ -321,8 +328,14 @@ cdef class Screen:
 		self.last_time = crtc_config_reply.timestamp
 		PyMem_Free(crtc_config_reply)
 
+	# def _get_mode_id(output, x, y):
+	#
+	#
+
 	def listen(self):
 		self.connect_to_server()
+
+		# self._exec_scripts = True
 
 		# Subscribe to screen change events
 		xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
