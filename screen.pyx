@@ -4,6 +4,7 @@ import logging
 import json
 from libc.stdio cimport snprintf
 from libc.string cimport strcpy
+from operator import itemgetter
 
 # Seems like certain cdefs are necessary, sometimes when I don't include the
 # event detection doesn't work
@@ -159,7 +160,7 @@ cdef class Screen:
 			num_screen_modes = xcb_randr_get_screen_resources_modes_length(self.screen_resources_reply)
 			for j in range(num_screen_modes):
 				if mode_info_iterator.data.id == mode_id_p[i]:
-					self.mode_info[output_name][mode_id_p[i]] = (mode_info_iterator.data.width, mode_info_iterator.data.height)
+					self.mode_info[output_name][mode_id_p[i]] = (i, mode_info_iterator.data.width, mode_info_iterator.data.height)
 					if mode_id_p[i] == mode:
 						mode_info["width"] = mode_info_iterator.data.width
 						mode_info["height"] = mode_info_iterator.data.height
@@ -344,12 +345,12 @@ cdef class Screen:
 	def _get_mode_id(self, output, x, y):
 		logging.debug("Mode infos: %s" % json.dumps(self.mode_info))
 		logging.debug("Matching (x,y): %s" % json.dumps((x,y)))
-		candidate_mode_ids = [k for k in self.mode_info[output] if self.mode_info[output][k] == (x,y)]
+		candidate_mode_ids = [(self.mode_info[output][k][0], k) for k in self.mode_info[output] if self.mode_info[output][k][1:] == (x,y)]
 		logging.debug("Candidate mode infos: %s" % json.dumps(candidate_mode_ids))
 
-		# Assume the smallest mode id is the desired one
-		candidate_mode_ids.sort()
-		return candidate_mode_ids[0]
+		# Get most preferred mode
+		candidate_mode_ids.sort(key=itemgetter(0))
+		return candidate_mode_ids[0][1]
 
 	def listen(self):
 		self.connect_to_server()
