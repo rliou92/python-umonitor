@@ -73,6 +73,8 @@ cdef class Screen:
 		output_info = {}
 		self.candidate_crtc = {}
 		self.output_name_to_p = {}
+		self.mode_info = {}
+		self.active_crtcs = []
 		cdef int i
 		for i in range(outputs_length):
 			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
@@ -91,9 +93,11 @@ cdef class Screen:
 
 			self.output_name_to_p[output_name] = PyCapsule_New(<void *> (output_p + i), NULL, NULL)
 
+
 			if output_info_reply.crtc:
 				# This output is enabled
 				self.candidate_crtc[output_name] = output_info_reply.crtc
+				self.active_crtcs.append(output_info_reply.crtc)
 
 				if output_p[i] == primary_output:
 					# This output is the primary output
@@ -106,11 +110,11 @@ cdef class Screen:
 				output_info[output_name]["y"] = crtc_info_reply.y
 				output_info[output_name]["rotate_setting"] = crtc_info_reply.rotation
 
-				mode_info = self._get_mode_info(output_info_reply, crtc_info_reply.mode)
+				mode_info = self._get_mode_info(output_name, output_info_reply, crtc_info_reply.mode)
 				output_info[output_name] = {**output_info[output_name], **mode_info}
-
 				PyMem_Free(crtc_info_reply)
 			else:
+				self._get_mode_info(output_name, output_info_reply, 0)
 				output_crtcs = xcb_randr_get_output_info_crtcs(output_info_reply)
 				self.candidate_crtc[output_name] = [output_crtcs[j] for j in range(output_info_reply.num_crtcs)]
 
@@ -137,27 +141,31 @@ cdef class Screen:
 				self.candidate_crtc[k] = chosen_crtc
 				already_assigned_crtcs.append(chosen_crtc)
 
-	cdef _get_mode_info(self, xcb_randr_get_output_info_reply_t *output_info_reply, xcb_randr_mode_t mode):
+	cdef _get_mode_info(self, output_name, xcb_randr_get_output_info_reply_t *output_info_reply, xcb_randr_mode_t mode):
 		cdef xcb_randr_mode_t *mode_id_p
 		cdef xcb_randr_mode_info_iterator_t mode_info_iterator
 
+		logging.debug("In get mode info")
 		num_output_modes = xcb_randr_get_output_info_modes_length(output_info_reply)
+		logging.debug("Got number of output modes")
 		mode_id_p = xcb_randr_get_output_info_modes(output_info_reply)
+		logging.debug("Got mode info information from output %s" % output_name)
 
 		mode_info = {}
+		self.mode_info[output_name] = {}
+		logging.debug("Getting mode info")
 		for i in range(num_output_modes):
-			if mode_id_p[i] != mode:
-				continue
 			mode_info_iterator = xcb_randr_get_screen_resources_modes_iterator(self.screen_resources_reply)
 			num_screen_modes = xcb_randr_get_screen_resources_modes_length(self.screen_resources_reply)
 			for j in range(num_screen_modes):
 				if mode_info_iterator.data.id == mode_id_p[i]:
-					mode_info["width"] = mode_info_iterator.data.width
-					mode_info["height"] = mode_info_iterator.data.height
-					mode_info["mode_id"] = mode_id_p[i]
+					self.mode_info[output_name][mode_id_p[i]] = (mode_info_iterator.data.width, mode_info_iterator.data.height)
+					if mode_id_p[i] == mode:
+						mode_info["width"] = mode_info_iterator.data.width
+						mode_info["height"] = mode_info_iterator.data.height
+						# mode_info["mode_id"] = mode_id_p[i]
 					# logging.debug("Dot clock: %s" % json.dumps(mode_info_iterator.data.dot_clock))
 				xcb_randr_mode_info_next(&mode_info_iterator)
-
 		return mode_info
 
 
@@ -256,7 +264,10 @@ cdef class Screen:
 		cdef int i
 		for i in range(num_crtcs):
 			logging.debug("Checking to see if crtc %d should be disabled" % crtcs_p[i])
-			if crtcs_p[i] in keep_crtcs:
+			# crtc_info_cookie = xcb_randr_get_crtc_info(self.c, crtcs_p[i], self.screen_resources_reply.config_timestamp)
+			# crtc_info_reply = xcb_randr_get_crtc_info_reply(self.c, crtc_info_cookie, &self.e)
+
+			if crtcs_p[i] in keep_crtcs or crtcs_p[i] not in self.active_crtcs:
 				continue
 			logging.debug("Disabling crtc %d" % (crtcs_p[i]))
 			if self.dry_run:
@@ -290,14 +301,15 @@ cdef class Screen:
 			<xcb_window_t> self.default_screen.root,
 			<uint16_t> screen_info["width"],
 			<uint16_t> screen_info["height"],
-			<uint16_t> screen_info["widthMM"],
-			<uint16_t> screen_info["heightMM"])
+			<uint32_t> screen_info["widthMM"],
+			<uint32_t> screen_info["heightMM"])
 
 	def _enable_outputs(self, output_info):
 		for output in output_info:
 			# Mode id seems to change on a laptop I use, so trying to recover it instead
 			# Recover mode id
-			# self._get_mode_id(output, output_info[output]["x"], output_info[output]["y"])
+			candidate_mode_id = self._get_mode_id(output, output_info[output]["width"], output_info[output]["height"])
+			logging.debug("Candidate mode id: %s" % candidate_mode_id)
 
 			logging.debug("Enabling crtc %d output %s" % (self.candidate_crtc[output], output))
 			logging.debug(json.dumps(output_info[output]))
@@ -310,7 +322,8 @@ cdef class Screen:
 				XCB_CURRENT_TIME,
 				<int16_t> output_info[output]["x"],
 				<int16_t> output_info[output]["y"],
-				<xcb_randr_mode_t> output_info[output]["mode_id"],
+				# <xcb_randr_mode_t> output_info[output]["mode_id"],
+				<xcb_randr_mode_t> candidate_mode_id,
 				<uint16_t> output_info[output]["rotate_setting"],
 				<uint32_t> 1, <xcb_randr_output_t *> PyCapsule_GetPointer(self.output_name_to_p[output], NULL))
 			if output_info[output].get("primary", False):
@@ -328,9 +341,15 @@ cdef class Screen:
 		self.last_time = crtc_config_reply.timestamp
 		PyMem_Free(crtc_config_reply)
 
-	# def _get_mode_id(output, x, y):
-	#
-	#
+	def _get_mode_id(self, output, x, y):
+		logging.debug("Mode infos: %s" % json.dumps(self.mode_info))
+		logging.debug("Matching (x,y): %s" % json.dumps((x,y)))
+		candidate_mode_ids = [k for k in self.mode_info[output] if self.mode_info[output][k] == (x,y)]
+		logging.debug("Candidate mode infos: %s" % json.dumps(candidate_mode_ids))
+
+		# Assume the smallest mode id is the desired one
+		candidate_mode_ids.sort()
+		return candidate_mode_ids[0]
 
 	def listen(self):
 		self.connect_to_server()

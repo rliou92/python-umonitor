@@ -111,7 +111,7 @@ class Umonitor(Screen):
 
 		logging.debug("Setup info: %s" % json.dumps(self.setup_info))
 		logging.debug("Target profile data: %s" % json.dumps(target_profile_data))
-		if self.setup_info == target_profile_data:
+		if self.setup_info == target_profile_data and not self.force_load:
 			print("Profile %s is already loaded." % profile_name)
 			return
 
@@ -150,7 +150,7 @@ class Umonitor(Screen):
 		# Change screen size
 		self._change_screen_size(delta_profile_data["Screen"])
 		# Enable outputs
-		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("mode_id", 0) != 0})
+		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("width", 0) != 0})
 
 		print("Profile %s loaded" % (profile_name))
 
@@ -197,6 +197,8 @@ class Umonitor(Screen):
 		for script in os.listdir(self.config_folder):
 			if script != "umon2.conf" and not script.startswith("."):
 				logging.info("Running script %s" % script)
+				if self.dry_run:
+					continue
 				subprocess.run(self.config_folder + "/" + script)
 
 def main():
