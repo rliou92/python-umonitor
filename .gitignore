@@ -2,3 +2,4 @@ build/*
 *.c
 *.cpython*
 umon2.conf
+valgrind-python.supp
