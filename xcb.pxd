@@ -112,6 +112,8 @@ cdef extern from "<xcb/randr.h>":
 		uint16_t width
 		uint16_t height
 		uint32_t dot_clock
+		uint16_t htotal
+		uint16_t vtotal
 
 	ctypedef struct xcb_randr_set_crtc_config_cookie_t:
 		pass

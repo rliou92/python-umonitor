@@ -75,7 +75,7 @@ cdef class Screen:
 		self.candidate_crtc = {}
 		self.output_name_to_p = {}
 		self.mode_info = {}
-		self.active_crtcs = []
+		# self.active_crtcs = []
 		cdef int i
 		for i in range(outputs_length):
 			output_info_cookie = xcb_randr_get_output_info(self.c, output_p[i], XCB_CURRENT_TIME)
@@ -98,7 +98,7 @@ cdef class Screen:
 			if output_info_reply.crtc:
 				# This output is enabled
 				self.candidate_crtc[output_name] = output_info_reply.crtc
-				self.active_crtcs.append(output_info_reply.crtc)
+				# self.active_crtcs.append(output_info_reply.crtc)
 
 				if output_p[i] == primary_output:
 					# This output is the primary output
@@ -160,11 +160,12 @@ cdef class Screen:
 			num_screen_modes = xcb_randr_get_screen_resources_modes_length(self.screen_resources_reply)
 			for j in range(num_screen_modes):
 				if mode_info_iterator.data.id == mode_id_p[i]:
-					self.mode_info[output_name][mode_id_p[i]] = (i, mode_info_iterator.data.width, mode_info_iterator.data.height)
+					refresh_rate = round(mode_info_iterator.data.dot_clock / (mode_info_iterator.data.htotal * mode_info_iterator.data.vtotal), 2)
+					self.mode_info[output_name][mode_id_p[i]] = (i, mode_info_iterator.data.width, mode_info_iterator.data.height, refresh_rate)
 					if mode_id_p[i] == mode:
 						mode_info["width"] = mode_info_iterator.data.width
 						mode_info["height"] = mode_info_iterator.data.height
-						# mode_info["mode_id"] = mode_id_p[i]
+						mode_info["refresh_rate"] = refresh_rate
 					# logging.debug("Dot clock: %s" % json.dumps(mode_info_iterator.data.dot_clock))
 				xcb_randr_mode_info_next(&mode_info_iterator)
 		return mode_info
@@ -268,7 +269,8 @@ cdef class Screen:
 			# crtc_info_cookie = xcb_randr_get_crtc_info(self.c, crtcs_p[i], self.screen_resources_reply.config_timestamp)
 			# crtc_info_reply = xcb_randr_get_crtc_info_reply(self.c, crtc_info_cookie, &self.e)
 
-			if crtcs_p[i] in keep_crtcs or crtcs_p[i] not in self.active_crtcs:
+			# if crtcs_p[i] in keep_crtcs or crtcs_p[i] not in self.active_crtcs:
+			if crtcs_p[i] in keep_crtcs:
 				continue
 			logging.debug("Disabling crtc %d" % (crtcs_p[i]))
 			if self.dry_run:
@@ -309,7 +311,7 @@ cdef class Screen:
 		for output in output_info:
 			# Mode id seems to change on a laptop I use, so trying to recover it instead
 			# Recover mode id
-			candidate_mode_id = self._get_mode_id(output, output_info[output]["width"], output_info[output]["height"])
+			candidate_mode_id = self._get_mode_id(output, output_info[output]["width"], output_info[output]["height"], output_info[output]["refresh_rate"])
 			logging.debug("Candidate mode id: %s" % candidate_mode_id)
 
 			logging.debug("Enabling crtc %d output %s" % (self.candidate_crtc[output], output))
@@ -342,10 +344,10 @@ cdef class Screen:
 		self.last_time = crtc_config_reply.timestamp
 		PyMem_Free(crtc_config_reply)
 
-	def _get_mode_id(self, output, x, y):
+	def _get_mode_id(self, output, x, y, refresh_rate):
 		logging.debug("Mode infos: %s" % json.dumps(self.mode_info))
 		logging.debug("Matching (x,y): %s" % json.dumps((x,y)))
-		candidate_mode_ids = [(self.mode_info[output][k][0], k) for k in self.mode_info[output] if self.mode_info[output][k][1:] == (x,y)]
+		candidate_mode_ids = [(self.mode_info[output][k][0], k) for k in self.mode_info[output] if self.mode_info[output][k][1:] == (x, y, refresh_rate)]
 		logging.debug("Candidate mode infos: %s" % json.dumps(candidate_mode_ids))
 
 		# Get most preferred mode
