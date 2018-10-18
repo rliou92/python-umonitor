@@ -5,6 +5,7 @@ import json
 from libc.stdio cimport snprintf
 from libc.string cimport strcpy
 from operator import itemgetter
+import time
 
 # Seems like certain cdefs are necessary, sometimes when I don't include the
 # event detection doesn't work
@@ -362,8 +363,13 @@ cdef class Screen:
 		xcb_flush(self.c)
 
 		while True:
-			logging.info("Waiting for event")
-			evt = xcb_wait_for_event(self.c)
+			# Poll for event because otherwise keyboard interrupts won't get through
+			evt = xcb_poll_for_event(self.c)
+			if evt == NULL:
+				time.sleep(1)
+				continue
+			# logging.info("Waiting for event")
+			# evt = xcb_wait_for_event(self.c)
 			logging.debug("After the event, event response type is %d" % evt.response_type)
 			if evt.response_type & XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE:
 				logging.info("Received screen change event")
@@ -376,7 +382,7 @@ cdef class Screen:
 
 	def autoload(self):
 		# To be overwritten
-		pass
+		raise NotImplementedError
 
 	def _get_screen_info(self):
 		return {
