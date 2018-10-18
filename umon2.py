@@ -42,7 +42,10 @@ class Umonitor(Screen):
 			self.get_active_profile()
 		elif self._listen:
 			self._prevent_duplicate_running()
-			with daemon.DaemonContext() as my_daemon:
+			if self._daemonize:
+				with daemon.DaemonContext() as my_daemon:
+					self.listen()
+			else:
 				self.listen()
 		elif self.delete:
 			self.delete_profile()
@@ -240,6 +243,7 @@ def main():
 	parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
 	parser.add_argument("-v", "--verbose", default=0, action="count", help="set verbosity level, 1 = info, 2 = debug")
 	parser.add_argument("-f", "--force", dest="force_load", action="store_true", help="disable all outputs even if they do not change during loading")
+	parser.add_argument("--daemonize", dest="_daemonize", action="store_true", help="daemonize when listening to events")
 
 	umon = Umonitor(config_folder)
 	parser.parse_args(namespace=umon)
