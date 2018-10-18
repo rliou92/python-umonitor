@@ -129,13 +129,13 @@ class Umonitor(Screen):
 		for k in self.setup_info["Monitors"]:
 			if k in target_profile_data["Monitors"]:
 				if self.setup_info["Monitors"][k] == target_profile_data["Monitors"][k] \
-					and target_profile_data["Monitors"][k].get("mode_id", False):
+					and target_profile_data["Monitors"][k].get("width", False):
 					keep_outputs.append(k)
 					continue
 				delta_profile_data["Monitors"][k] = target_profile_data["Monitors"][k]
 			else:
 				delta_profile_data["Monitors"][k] = {}
-				delta_profile_data["Monitors"][k]["mode_id"] = 0
+				delta_profile_data["Monitors"][k]["width"] = 0
 
 
 		logging.debug("Delta profile: %s" % json.dumps(delta_profile_data))

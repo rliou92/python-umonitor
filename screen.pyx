@@ -146,15 +146,11 @@ cdef class Screen:
 		cdef xcb_randr_mode_t *mode_id_p
 		cdef xcb_randr_mode_info_iterator_t mode_info_iterator
 
-		logging.debug("In get mode info")
 		num_output_modes = xcb_randr_get_output_info_modes_length(output_info_reply)
-		logging.debug("Got number of output modes")
 		mode_id_p = xcb_randr_get_output_info_modes(output_info_reply)
-		logging.debug("Got mode info information from output %s" % output_name)
 
 		mode_info = {}
 		self.mode_info[output_name] = {}
-		logging.debug("Getting mode info")
 		for i in range(num_output_modes):
 			mode_info_iterator = xcb_randr_get_screen_resources_modes_iterator(self.screen_resources_reply)
 			num_screen_modes = xcb_randr_get_screen_resources_modes_length(self.screen_resources_reply)
@@ -318,6 +314,7 @@ cdef class Screen:
 			logging.debug(json.dumps(output_info[output]))
 			if self.dry_run:
 				continue
+			output_p = <xcb_randr_output_t *> PyCapsule_GetPointer(self.output_name_to_p[output], NULL)
 			crtc_config_cookie = xcb_randr_set_crtc_config(
 				self.c,
 				<xcb_randr_crtc_t> self.candidate_crtc[output],
@@ -328,12 +325,13 @@ cdef class Screen:
 				# <xcb_randr_mode_t> output_info[output]["mode_id"],
 				<xcb_randr_mode_t> candidate_mode_id,
 				<uint16_t> output_info[output]["rotate_setting"],
-				<uint32_t> 1, <xcb_randr_output_t *> PyCapsule_GetPointer(self.output_name_to_p[output], NULL))
+				<uint32_t> 1, output_p)
 			if output_info[output].get("primary", False):
+				logging.debug("Trying to set primary output for %s" % output)
 				xcb_randr_set_output_primary(
 					self.c,
 					self.default_screen.root,
-					<xcb_randr_crtc_t> self.candidate_crtc[output]
+					output_p[0]
 				)
 		if self.dry_run:
 			return
