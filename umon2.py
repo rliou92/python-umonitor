@@ -159,7 +159,12 @@ class Umonitor(Screen):
 		# Change screen size
 		self._change_screen_size(delta_profile_data["Screen"])
 		# Enable outputs
-		self._enable_outputs({k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("width", 0) != 0})
+		enable_outputs = {k:delta_profile_data["Monitors"][k] for k in delta_profile_data["Monitors"] if delta_profile_data["Monitors"][k].get("width", 0) != 0}
+		if enable_outputs:
+			logging.info("Enabling outputs.")
+			self._enable_outputs(enable_outputs)
+		else:
+			logging.info("No outputs to enable.")
 
 		print("Profile %s loaded" % (profile_name))
 
