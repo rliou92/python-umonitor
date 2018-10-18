@@ -6,6 +6,8 @@ from screen import Screen
 import json
 import os
 import subprocess
+import daemon
+import sys
 
 class Umonitor(Screen):
 
@@ -39,7 +41,9 @@ class Umonitor(Screen):
 		elif self.gap:
 			self.get_active_profile()
 		elif self._listen:
-			self.listen()
+			self._prevent_duplicate_running()
+			with daemon.DaemonContext() as my_daemon:
+				self.listen()
 		elif self.delete:
 			self.delete_profile()
 		else:
@@ -108,6 +112,8 @@ class Umonitor(Screen):
 			target_profile_data = self.profile_data[profile_name]
 		except KeyError:
 			raise Exception("Profile %s does not exist in configuration file." % profile_name)
+
+		self._prevent_duplicate_running()
 
 		logging.debug("Setup info: %s" % json.dumps(self.setup_info))
 		logging.debug("Target profile data: %s" % json.dumps(target_profile_data))
@@ -189,6 +195,13 @@ class Umonitor(Screen):
 		logging.debug("Current status: %s" % self.setup_info)
 		logging.debug("Candidate crtcs: %s" % self.candidate_crtc)
 
+	def _prevent_duplicate_running(self):
+		with open(os.devnull, "w") as devnull_fh:
+			pgrep_out = subprocess.run(["pgrep", "-c", "umon2.py"], capture_output=True)
+		# logging.debug(float(pgrep_out.stdout.decode("UTF-8")))
+		if float(pgrep_out.stdout.decode("UTF-8")) > 1:
+			raise Exception("umonitor is already running. Please kill that process and try again.")
+
 	def view_profiles(self):
 		print(json.dumps(self.profile_data, indent=4))
 
@@ -209,10 +222,10 @@ def main():
 	logging.basicConfig()
 
 	try:
-		config_folder = os.environ["HOME"]
+		home = os.environ["HOME"]
 	except KeyError:
 		raise Exception("Need home environment variable to locate configuration file.")
-	config_folder += "/.config/umon"
+	config_folder = home + "/.config/umon"
 
 	parser = argparse.ArgumentParser(description="Manage monitor configuration.")
 
