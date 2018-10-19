@@ -4,16 +4,15 @@ from Cython.Build import cythonize
 
 extensions = [
 	Extension(
-		"*",
-		["*.pyx"],
-		libraries = ["xcb-randr", "xcb"]
+		"screen",
+		["screen.c"]
 	),
 ]
 
 setup(
 	name = "umonitor",
 	packages = find_packages(),
-	ext_modules = cythonize(extensions),
+	ext_modules = extensions,
 	license="MIT",
 	version="20181018",
 	author="Ricky Liou",
