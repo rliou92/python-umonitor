@@ -5,7 +5,8 @@ from Cython.Build import cythonize
 extensions = [
 	Extension(
 		"screen",
-		["screen.c"]
+		["screen.c"],
+		libraries = ["xcb-randr", "xcb"]
 	),
 ]
 
