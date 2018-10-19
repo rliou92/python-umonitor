@@ -11,7 +11,7 @@ extensions = [
 ]
 
 setup(
-	name = "umon2",
+	name = "umonitor",
 	packages = find_packages(),
 	ext_modules = cythonize(extensions),
 
