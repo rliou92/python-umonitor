@@ -10,9 +10,9 @@ import daemon
 
 class Umonitor(Screen):
 
-	def __init__(self, config_folder):
+	def __init__(self, config_folder, conf_fn):
 		self.config_folder = config_folder
-		self.config_file = config_folder + "/umon.conf"
+		self.config_file = config_folder + conf_fn
 		self.dry_run = False
 		self.connected = False
 		self._exec_scripts = True
@@ -215,7 +215,7 @@ class Umonitor(Screen):
 	def exec_scripts(self, profile_name):
 		os.environ["UMONITOR_PROFILE"] = profile_name
 		for script in os.listdir(self.config_folder):
-			if script != "umon2.conf" and not script.startswith("."):
+			if script != conf_fn[1:] and not script.startswith("."):
 				logging.info("Running script %s" % script)
 				if self.dry_run:
 					continue
@@ -233,6 +233,7 @@ def main():
 	except KeyError:
 		raise Exception("Need home environment variable to locate configuration file.")
 	config_folder = home + "/.config/umon"
+	conf_fn = "/umon.conf"
 
 	parser = argparse.ArgumentParser(description="Manage monitor configuration.")
 
@@ -249,7 +250,7 @@ def main():
 	parser.add_argument("-f", "--force", dest="force_load", action="store_true", help="disable all outputs even if they do not change during loading")
 	parser.add_argument("--daemonize", dest="_daemonize", action="store_true", help="daemonize when listening to events")
 
-	umon = Umonitor(config_folder)
+	umon = Umonitor(config_folder, conf_fn)
 	parser.parse_args(namespace=umon)
 
 	logging_map = {
@@ -260,7 +261,7 @@ def main():
 	logger = logging.getLogger()
 	logger.setLevel(logging_map[umon.verbose])
 
-	logging.debug("Looking here for config file: %s" % config_folder + "/umon.conf")
+	logging.debug("Looking here for config file: %s" % config_folder + conf_fn)
 	umon.run()
 
 
