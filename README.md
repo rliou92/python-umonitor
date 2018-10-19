@@ -75,6 +75,7 @@ Give me some feedback!
   * Resolution and refresh rate
   * Primary output
   * Rotation
+* Runs scripts in `~/.config/umon` with the currently loaded parameter stored in the environment variable `UMONITOR_PROFILE`.
 * Valgrind clean
 
 Bugs:
@@ -83,7 +84,7 @@ Bugs:
 I'm open for any feature requests!
 
 # About
-This is a Python rewrite of my earlier program [umonitor](https://github.com/rliou92/umonitor), which was written in C. A higher level language such as Python allows quicker development times and easier maintenance. 
+This is a Python rewrite of my earlier program [umonitor](https://github.com/rliou92/umonitor), which was written in C. A higher level language such as Python allows quicker development times and easier maintenance.
 
 # Credits
 I borrowed the edid parsing code from [eds](https://github.com/compnerd/eds).
