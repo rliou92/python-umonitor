@@ -20,7 +20,7 @@ For Arch Linux users there is an AUR package [here](https://aur.archlinux.org/pa
 The configuration file is stored in `~/.config/umon/umon.conf`. You can load a
 profile manually by executing `umonitor --load <profile_name>`. Profiles can be deleted `umonitor --delete <profile_name>`.
 
-`umonitor` runs all scripts automatically in `~/.config/umon` after a profile has been loaded.
+`umonitor` runs all scripts automatically in `~/.config/umon` after a profile has been loaded. An example script that I use can be seen in `toggle_media.py`.
 
 Example scenario: You are working on a laptop. You want to save just the monitor
 configuration of just the laptop screen into the profile name called 'home'. At
