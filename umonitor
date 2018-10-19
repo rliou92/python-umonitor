@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import logging
 import argparse
@@ -12,7 +12,7 @@ class Umonitor(Screen):
 
 	def __init__(self, config_folder):
 		self.config_folder = config_folder
-		self.config_file = config_folder + "/umon2.conf"
+		self.config_file = config_folder + "/umon.conf"
 		self.dry_run = False
 		self.connected = False
 		self._exec_scripts = True
@@ -260,6 +260,7 @@ def main():
 	logger = logging.getLogger()
 	logger.setLevel(logging_map[umon.verbose])
 
+	logging.debug("Looking here for config file: %s" % config_folder + "/umon.conf")
 	umon.run()
 
 
