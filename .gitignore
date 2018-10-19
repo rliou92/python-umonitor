@@ -1,5 +1,4 @@
 build/*
-*.c
 *.cpython*
 umon2.conf
 valgrind-python.supp
@@ -7,3 +6,4 @@ dist
 *.egg-info
 Arch
 files.txt
+setup_dev.py
