@@ -4,7 +4,7 @@ from setuptools.extension import Extension
 extensions = [
 	Extension(
 		"screen",
-		["screen.c"],
+		["umonitor/screen.c"],
 		libraries = ["xcb-randr", "xcb"]
 	),
 ]
@@ -19,6 +19,12 @@ setup(
 	author_email="rliou92@gmail.com",
 	description="Manage monitor configuration automatically.",
 	url="https://github.com/rliou92/python-umonitor",
+
+	entry_points={
+		'console_scripts': [
+			'umonitor = umonitor:main',
+		]
+	},
 
 	zip_safe=False
 
