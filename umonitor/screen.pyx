@@ -102,7 +102,6 @@ cdef class Screen:
 				# self.active_crtcs.append(output_info_reply.crtc)
 
 				if output_p[i] == primary_output:
-					# This output is the primary output
 					output_info[output_name]["primary"] = True
 
 				crtc_info_cookie = xcb_randr_get_crtc_info(self.c, output_info_reply.crtc, self.screen_resources_reply.config_timestamp)

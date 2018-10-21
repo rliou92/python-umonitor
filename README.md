@@ -22,7 +22,7 @@ profile manually by executing `umonitor --load <profile_name>`. Profiles can be 
 
 `umonitor` runs all scripts automatically in `~/.config/umon` after a profile has been loaded. An example script that I use can be seen in `toggle_media.py`.
 
-Example scenario: You are working on a laptop. You want to save just the monitor
+Example scenario: You are working on a laptop. You want to save the monitor
 configuration of just the laptop screen into the profile name called 'home'. At
 home you plug in an external monitor, and you want to save that configuration as
 'docked'.
