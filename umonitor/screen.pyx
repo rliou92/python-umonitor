@@ -355,20 +355,23 @@ cdef class Screen:
 	def listen(self):
 		self.connect_to_server()
 
-		# self._exec_scripts = True
-
 		# Subscribe to screen change events
 		xcb_randr_select_input(self.c, self.default_screen.root, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE)
 		xcb_flush(self.c)
 
+		if not self._poll:
+			logging.warning("Program will not handle keyboard interrupts. In order to stop program, send it a SIGKILL.")
+
 		while True:
 			# Poll for event because otherwise keyboard interrupts won't get through
-			evt = xcb_poll_for_event(self.c)
-			if evt == NULL:
-				time.sleep(1)
-				continue
-			# logging.info("Waiting for event")
-			# evt = xcb_wait_for_event(self.c)
+			if self._poll:
+				evt = xcb_poll_for_event(self.c)
+				if evt == NULL:
+					time.sleep(1)
+					continue
+			else:
+				logging.info("Waiting for event")
+				evt = xcb_wait_for_event(self.c)
 			logging.debug("After the event, event response type is %d" % evt.response_type)
 			if evt.response_type & XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE:
 				logging.info("Received screen change event")

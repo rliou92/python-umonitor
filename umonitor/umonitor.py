@@ -238,6 +238,7 @@ class Umonitor(Screen):
 		parser.add_argument("-f", "--force", dest="force_load", action="store_true", help="disable all outputs even if they do not change during loading")
 		parser.add_argument("--daemonize", dest="_daemonize", action="store_true", help="daemonize when listening to events")
 		parser.add_argument("--no_exec", dest="_exec_scripts", action="store_false", help="do not run scripts after loading of a profile is finished")
+		parser.add_argument("--no_poll", dest="_poll", action="store_false", help="do not poll for monitor change event, instead use a blocking call")
 
 		parser.parse_args(namespace=self)
 
