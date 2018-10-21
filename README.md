@@ -84,6 +84,8 @@ optional arguments:
   --daemonize           daemonize when listening to events
   --no_exec             do not run scripts after loading of a profile is
                         finished
+  --no_poll             do not poll for monitor change event, instead use a
+                        blocking call
 ```
 
 If you would like to auto start this program, you can add the program to your .xinitrc:
