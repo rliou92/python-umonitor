@@ -204,8 +204,7 @@ class Umonitor(Screen):
 		logging.debug("Candidate crtcs: %s" % self.candidate_crtc)
 
 	def _prevent_duplicate_running(self):
-		with open(os.devnull, "w") as devnull_fh:
-			pgrep_out = subprocess.run(["pgrep", "-c", "umonitor"], capture_output=True)
+		pgrep_out = subprocess.run(["pgrep", "-c", "umonitor"], capture_output=True)
 		# logging.debug(float(pgrep_out.stdout.decode("UTF-8")))
 		if float(pgrep_out.stdout.decode("UTF-8")) > 1:
 			raise Exception("umonitor is already running. Please kill that process and try again.")
