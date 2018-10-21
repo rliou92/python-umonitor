@@ -222,49 +222,29 @@ class Umonitor(Screen):
 					continue
 				subprocess.run(self.config_folder + "/" + script)
 
-def main():
-	# setup = current state of monitors, their resolutions, positions, etc
-	# profile = loaded from configuration file
+	def parse_args(self):
+		parser = argparse.ArgumentParser(description="Manage monitor configuration.")
 
-	# PYTHONMALLOC=malloc valgrind --leak-check=full --show-leak-kinds=definite python umon2.py
-	logging.basicConfig()
+		mut_ex_group = parser.add_mutually_exclusive_group()
+		# TODO add a version option
+		mut_ex_group.add_argument("-w", "--view", action="store_true", help="view configuration file")
+		mut_ex_group.add_argument("-s", "--save", metavar="PROFILE", help="saves current setup into profile name")
+		mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
+		mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
+		mut_ex_group.add_argument("-a", "--autoload", dest="_autoload", action="store_true", help="load profile that matches with current configuration once")
+		mut_ex_group.add_argument("-n", "--listen", dest="_listen", action="store_true", help="listens for changes in the setup, and applies the new configuration automatically")
+		mut_ex_group.add_argument("-g", "--get_active_profile", dest="gap", action="store_true", help="returns current active profile")
+		parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
+		parser.add_argument("-v", "--verbose", default=0, action="count", help="set verbosity level, 1 = info, 2 = debug")
+		parser.add_argument("-f", "--force", dest="force_load", action="store_true", help="disable all outputs even if they do not change during loading")
+		parser.add_argument("--daemonize", dest="_daemonize", action="store_true", help="daemonize when listening to events")
 
-	try:
-		home = os.environ["HOME"]
-	except KeyError:
-		raise Exception("Need home environment variable to locate configuration file.")
-	config_folder = home + "/.config/umon"
-	config_fn = "/umon.conf"
+		parser.parse_args(namespace=self)
 
-	parser = argparse.ArgumentParser(description="Manage monitor configuration.")
-
-	mut_ex_group = parser.add_mutually_exclusive_group()
-	mut_ex_group.add_argument("-w", "--view", action="store_true", help="view configuration file")
-	mut_ex_group.add_argument("-s", "--save", metavar="PROFILE", help="saves current setup into profile name")
-	mut_ex_group.add_argument("-l", "--load", metavar="PROFILE", help="load setup from profile name")
-	mut_ex_group.add_argument("-d", "--delete", metavar="PROFILE", help="delete profile name from configuration file")
-	mut_ex_group.add_argument("-a", "--autoload", dest="_autoload", action="store_true", help="load profile that matches with current configuration once")
-	mut_ex_group.add_argument("-n", "--listen", dest="_listen", action="store_true", help="listens for changes in the setup, and applies the new configuration automatically")
-	mut_ex_group.add_argument("-g", "--get_active_profile", dest="gap", action="store_true", help="returns current active profile")
-	parser.add_argument("--dry_run", action="store_true", help="run program without changing configuration")
-	parser.add_argument("-v", "--verbose", default=0, action="count", help="set verbosity level, 1 = info, 2 = debug")
-	parser.add_argument("-f", "--force", dest="force_load", action="store_true", help="disable all outputs even if they do not change during loading")
-	parser.add_argument("--daemonize", dest="_daemonize", action="store_true", help="daemonize when listening to events")
-
-	umon = Umonitor(config_folder, config_fn)
-	parser.parse_args(namespace=umon)
-
-	logging_map = {
-		0: logging.WARNING,
-		1: logging.INFO,
-		2: logging.DEBUG
-	}
-	logger = logging.getLogger()
-	logger.setLevel(logging_map[umon.verbose])
-
-	logging.debug("Looking here for config file: %s" % config_folder + config_fn)
-	umon.run()
-
-
-if __name__ == "__main__":
-	main()
+		logging_map = {
+			0: logging.WARNING,
+			1: logging.INFO,
+			2: logging.DEBUG
+		}
+		logger = logging.getLogger()
+		logger.setLevel(logging_map[self.verbose])
