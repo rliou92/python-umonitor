@@ -16,7 +16,7 @@ class Umonitor(Screen):
 		self.config_fn = config_fn
 		self.dry_run = False
 		self.connected = False
-		self._exec_scripts = True
+		# self._exec_scripts = True
 
 		try:
 			with open(self.config_file, "r") as config_fh:
@@ -237,6 +237,7 @@ class Umonitor(Screen):
 		parser.add_argument("-v", "--verbose", default=0, action="count", help="set verbosity level, 1 = info, 2 = debug")
 		parser.add_argument("-f", "--force", dest="force_load", action="store_true", help="disable all outputs even if they do not change during loading")
 		parser.add_argument("--daemonize", dest="_daemonize", action="store_true", help="daemonize when listening to events")
+		parser.add_argument("--no_exec", dest="_exec_scripts", action="store_false", help="do not run scripts after loading of a profile is finished")
 
 		parser.parse_args(namespace=self)
 
