@@ -53,7 +53,36 @@ docked
 ---------------------------------
 ```
 
-Program help can also be viewed through `umonitor --help`.
+Program help can be viewed through `umonitor --help`.
+```
+$ umonitor --help
+usage: umonitor [-h]
+                [-w | -s PROFILE | -l PROFILE | -d PROFILE | -a | -n | -g]
+                [--dry_run] [-v] [-f] [--daemonize]
+
+Manage monitor configuration.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -w, --view            view configuration file
+  -s PROFILE, --save PROFILE
+                        saves current setup into profile name
+  -l PROFILE, --load PROFILE
+                        load setup from profile name
+  -d PROFILE, --delete PROFILE
+                        delete profile name from configuration file
+  -a, --autoload        load profile that matches with current configuration
+                        once
+  -n, --listen          listens for changes in the setup, and applies the new
+                        configuration automatically
+  -g, --get_active_profile
+                        returns current active profile
+  --dry_run             run program without changing configuration
+  -v, --verbose         set verbosity level, 1 = info, 2 = debug
+  -f, --force           disable all outputs even if they do not change during
+                        loading
+  --daemonize           daemonize when listening to events
+```
 
 If you would like to auto start this program, you can add the program to your .xinitrc:
 ```
