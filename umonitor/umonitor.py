@@ -140,7 +140,8 @@ class Umonitor(Screen):
 				if self.setup_info["Monitors"][k] == target_profile_data["Monitors"][k] \
 					and target_profile_data["Monitors"][k].get("width", False):
 					keep_outputs.append(k)
-					continue
+					if not self.force_load:
+						continue
 				delta_profile_data["Monitors"][k] = target_profile_data["Monitors"][k]
 			else:
 				delta_profile_data["Monitors"][k] = {}
