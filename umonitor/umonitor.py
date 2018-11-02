@@ -57,7 +57,7 @@ class Umonitor(Screen):
 		self.setup_info = self.get_setup_info()
 
 		if not self.profile_data:
-			print("No configuration file found. Start by saving one using 'umon2.py -s <profile_name>'.")
+			print("No configuration file found. Start by saving one using 'umonitor -s <profile_name>'.")
 
 		for profile in self.profile_data:
 			if self.profile_data[profile] == self.setup_info:
@@ -192,7 +192,7 @@ class Umonitor(Screen):
 		self.setup_info = self.get_setup_info()
 
 		if not self.profile_data:
-			print("No configuration file found. Start by saving one using 'umon2.py -s <profile_name>'.")
+			print("No configuration file found. Start by saving one using 'umonitor -s <profile_name>'.")
 		for profile in self.profile_data:
 			out = profile
 			logging.debug("Profile data: %s" % self.profile_data[profile])
