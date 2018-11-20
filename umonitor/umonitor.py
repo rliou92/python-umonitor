@@ -60,7 +60,7 @@ class Umonitor(Screen):
 			print("No configuration file found. Start by saving one using 'umonitor -s <profile_name>'.")
 
 		for profile in self.profile_data:
-			if self.profile_data[profile] == self.setup_info:
+			if self.profile_data[profile]["Monitors"] == self.setup_info["Monitors"]:
 				logging.debug("Profile %s matches current setup" % (profile))
 				print(profile)
 
