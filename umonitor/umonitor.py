@@ -70,6 +70,9 @@ class Umonitor(Screen):
 		self.connect_to_server()
 		self.setup_info = self.get_setup_info()
 
+		if not os.path.exists(self.config_folder):
+			os.makedirs(self.config_folder)
+
 		with open(self.config_file, "w") as config_fh:
 			# TODO check for overwriting
 			logging.debug(self.profile_data)
