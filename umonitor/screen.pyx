@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 from cpython.mem cimport PyMem_Free, PyMem_Malloc
 from cpython.pycapsule cimport PyCapsule_New, PyCapsule_GetPointer
 import logging
@@ -6,11 +8,24 @@ from libc.stdio cimport snprintf
 from libc.string cimport strcpy
 from operator import itemgetter
 import time
+from umonitor.xcb cimport *
 
 # Seems like certain cdefs are necessary, sometimes when I don't include the
 # event detection doesn't work
 
 cdef class Screen:
+
+	cdef xcb_connection_t *c
+	cdef xcb_screen_t *default_screen
+	cdef int _screenNum
+	cdef xcb_intern_atom_reply_t *edid_atom
+	cdef xcb_generic_error_t *e
+	cdef xcb_randr_get_screen_resources_reply_t *screen_resources_reply
+
+	cdef _get_mode_info(self, output_name, xcb_randr_get_output_info_reply_t *output_info_reply, xcb_randr_mode_t mode)
+	cdef char * _get_output_name(self, xcb_randr_get_output_info_reply_t *output_info_reply)
+	cdef char * _get_edid_name(self, xcb_randr_output_t * output_p)
+	cdef xcb_randr_output_t _get_primary_output(self)
 
 	def __cinit__(self):
 		self.screen_resources_reply = NULL
@@ -176,7 +191,7 @@ cdef class Screen:
 		for i in range(output_name_length):
 			output_name[i] = <char> output_name_raw[i]
 
-		output_name[output_name_length] = '\0'
+		output_name[output_name_length] = b'0'
 		logging.info("Output name %s" % output_name)
 		return output_name
 
@@ -215,7 +230,7 @@ cdef class Screen:
 		vendor[0] = <char> (sc + (edid[8] >> 2))
 		vendor[1] = <char> (sc + (((edid[8] & 0x03) << 3) | (edid[9] >> 5)))
 		vendor[2] = <char> (sc + (edid[9] & 0x1F))
-		vendor[3] = '\0'
+		vendor[3] = b'0'
 
 		# product = (edid[11] << 8) | edid[10];
 		# serial = edid[15] << 24 | edid[14] << 16 | edid[13] << 8 | edid[12];

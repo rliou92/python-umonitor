@@ -1,4 +1,4 @@
-from xcb cimport *
+from umonitor.xcb cimport *
 
 cdef class Screen:
 
