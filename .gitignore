@@ -6,4 +6,3 @@ dist
 *.egg-info
 Arch
 files.txt
-setup_dev.py
