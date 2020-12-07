@@ -19,7 +19,9 @@ setup(
 	author_email="rliou92@gmail.com",
 	description="Manage monitor configuration automatically.",
 	url="https://github.com/rliou92/python-umonitor",
-
+	install_requires=[
+          'daemon',
+      ],
 	entry_points={
 		'console_scripts': [
 			'umonitor = umonitor:main',
