@@ -41,7 +41,8 @@ class Umonitor(Screen):
 		elif self.gap:
 			self.get_active_profile()
 		elif self._listen:
-			self._prevent_duplicate_running()
+			if self.is_already_running():
+				raise Exception("umonitor is already running. Please kill that process and try again.")
 			if self._daemonize:
 				with daemon.DaemonContext() as my_daemon:
 					self.listen()
@@ -119,12 +120,26 @@ class Umonitor(Screen):
 		except KeyError:
 			raise Exception("Profile %s does not exist in configuration file." % profile_name)
 
-		self._prevent_duplicate_running()
+		already_running = self.is_already_running()
+		if already_running:
+			# print("Another instance of umonitor is already running.")
+			# print("The existing umonitor process will be killed.")
+
+			# Kill oldest umonitor process
+			pgrep_out = subprocess.run(["pgrep", "-o", "umonitor"], capture_output=True)
+			subprocess.run(["kill", pgrep_out.stdout.decode("UTF-8").rstrip()])
 
 		logging.debug("Setup info: %s" % json.dumps(self.setup_info))
 		logging.debug("Target profile data: %s" % json.dumps(target_profile_data))
 		if self.setup_info == target_profile_data and not self.force_load:
 			print("Profile %s is already loaded." % profile_name)
+
+			if already_running:
+				# Previous process was killed, time to replace it
+				# Replace with a daemon
+				with daemon.DaemonContext() as my_daemon:
+						self.listen()
+
 			return
 
 		if self.setup_info["Monitors"].keys() != target_profile_data["Monitors"].keys():
@@ -175,6 +190,13 @@ class Umonitor(Screen):
 		if self._exec_scripts:
 			self.exec_scripts(profile_name)
 
+		if already_running:
+			# Previous process was killed, time to replace it
+			# Replace with a daemon
+			with daemon.DaemonContext() as my_daemon:
+					self.listen()
+
+
 	def autoload(self):
 		if self.connected == False:
 			self.connect_to_server()
@@ -207,11 +229,13 @@ class Umonitor(Screen):
 		logging.debug("Current status: %s" % self.setup_info)
 		logging.debug("Candidate crtcs: %s" % self.candidate_crtc)
 
-	def _prevent_duplicate_running(self):
+	def is_already_running(self):
 		pgrep_out = subprocess.run(["pgrep", "-c", "umonitor"], capture_output=True)
 		# logging.debug(float(pgrep_out.stdout.decode("UTF-8")))
 		if float(pgrep_out.stdout.decode("UTF-8")) > 1:
-			raise Exception("umonitor is already running. Please kill that process and try again.")
+			return True
+		else:
+			return False
 
 	def view_profiles(self):
 		print(json.dumps(self.profile_data, indent=4))
