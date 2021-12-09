@@ -103,10 +103,10 @@ cdef class Screen:
 
 			# Output is connected
 			output_name_bytes = self._get_output_name(output_info_reply)
-			output_name = output_name_bytes.decode("UTF-8")
+			output_name = output_name_bytes.decode("latin-1")
 			output_info[output_name] = {}
 			edid_name = self._get_edid_name(output_p + i)
-			output_info[output_name]["edid"] = edid_name.decode("UTF-8")
+			output_info[output_name]["edid"] = edid_name.decode("latin-1")
 
 			self.output_name_to_p[output_name] = PyCapsule_New(<void *> (output_p + i), NULL, NULL)
 
