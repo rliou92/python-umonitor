@@ -120,21 +120,23 @@ class Umonitor(Screen):
 		except KeyError:
 			raise Exception("Profile %s does not exist in configuration file." % profile_name)
 
-		already_running = self.is_already_running()
-		if already_running:
+		daemon_killed = False
+		if self.is_already_running():
 			# print("Another instance of umonitor is already running.")
 			# print("The existing umonitor process will be killed.")
 
 			# Kill oldest umonitor process
 			pgrep_out = subprocess.run(["pgrep", "-o", "umonitor"], capture_output=True)
-			subprocess.run(["kill", pgrep_out.stdout.decode("UTF-8").rstrip()])
+			kill_out = subprocess.run(["kill", pgrep_out.stdout.decode("UTF-8").rstrip()])
+			if kill_out.returncode == 0:
+				daemon_killed = True
 
 		logging.debug("Setup info: %s" % json.dumps(self.setup_info))
 		logging.debug("Target profile data: %s" % json.dumps(target_profile_data))
 		if self.setup_info == target_profile_data and not self.force_load:
 			print("Profile %s is already loaded." % profile_name)
 
-			if already_running:
+			if daemon_killed:
 				# Previous process was killed, time to replace it
 				# Replace with a daemon
 				with daemon.DaemonContext() as my_daemon:
@@ -190,7 +192,7 @@ class Umonitor(Screen):
 		if self._exec_scripts:
 			self.exec_scripts(profile_name)
 
-		if already_running:
+		if daemon_killed:
 			# Previous process was killed, time to replace it
 			# Replace with a daemon
 			with daemon.DaemonContext() as my_daemon:
