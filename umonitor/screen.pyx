@@ -191,7 +191,7 @@ cdef class Screen:
 		for i in range(output_name_length):
 			output_name[i] = <char> output_name_raw[i]
 
-		output_name[output_name_length] = b'0'
+		output_name[output_name_length] = b'\x00'
 		logging.info("Output name %s" % output_name)
 		return output_name
 
@@ -230,7 +230,7 @@ cdef class Screen:
 		vendor[0] = <char> (sc + (edid[8] >> 2))
 		vendor[1] = <char> (sc + (((edid[8] & 0x03) << 3) | (edid[9] >> 5)))
 		vendor[2] = <char> (sc + (edid[9] & 0x1F))
-		vendor[3] = b'0'
+		vendor[3] = b'\x00'
 
 		# product = (edid[11] << 8) | edid[10];
 		# serial = edid[15] << 24 | edid[14] << 16 | edid[13] << 8 | edid[12];

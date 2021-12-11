@@ -20,7 +20,9 @@ setup(
 	author_email="rliou92@gmail.com",
 	description="Manage monitor configuration automatically.",
 	url="https://github.com/rliou92/python-umonitor",
-
+	install_requires=[
+          'daemon',
+      ],
 	zip_safe=False
 
 )
